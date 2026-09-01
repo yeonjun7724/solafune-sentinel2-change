@@ -50,3 +50,7 @@ outputs/qgis/*.zip.sha256
 
 # Original raw assignment bundle kept outside inputs/ for provenance; not part of deliverable
 /Technical Assignment_DS/
+
+# Local-only submission bundle and personal working notes; not pushed to GitHub
+/submission/
+/yeonjun/
