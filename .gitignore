@@ -50,3 +50,6 @@ outputs/qgis/*.zip.sha256
 
 # Original raw assignment bundle kept outside inputs/ for provenance; not part of deliverable
 /Technical Assignment_DS/
+
+# Local submission bundle (zips duplicating tracked repo content) - not part of git history
+/submission/
