@@ -46,6 +46,29 @@ def test_cli_run_smoke(synthetic_bands, tmp_path):
     assert (tmp_path / "out" / "summary.json").exists()
 
 
+def test_cli_validate_json_output(synthetic_bands, tmp_path):
+    import json
+
+    config_path = _write_config(synthetic_bands, tmp_path)
+    result = runner.invoke(app, ["validate", "--config", config_path, "--json"])
+    assert result.exit_code == 0
+    payload = json.loads(result.output.strip().splitlines()[-1])
+    assert payload["status"] == "valid"
+    assert payload["is_valid"] is True
+    assert len(payload["band_metadata"]) == 6
+
+
+def test_cli_validate_json_output_reports_invalid(synthetic_bands, tmp_path):
+    import json
+
+    (synthetic_bands["before_dir"] / "B04.tif").unlink()
+    config_path = _write_config(synthetic_bands, tmp_path)
+    result = runner.invoke(app, ["validate", "--config", config_path, "--json"])
+    assert result.exit_code == 1
+    payload = json.loads(result.output.strip().splitlines()[-1])
+    assert payload["is_valid"] is False
+
+
 def test_cli_run_json_progress_emits_valid_json_lines(synthetic_bands, tmp_path):
     import json
 

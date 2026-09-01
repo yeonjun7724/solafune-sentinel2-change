@@ -72,6 +72,47 @@ Provider removed OK
 - [x] `Sentinel2ChangeAnalysisAlgorithm.initAlgorithm()` builds all 15 parameters without error
 - [x] Provider unregisters cleanly
 
+### Real-world bug found and fixed via actual installed-plugin use
+
+A user actually installed the plugin from ZIP into a real QGIS 3.44.12
+profile (`%APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\solafune_change_analyzer\`)
+and clicked **Validate Inputs**. `on_validate()` unconditionally attempted
+the embedded import path and only caught `CoreImportError`; QGIS's embedded
+interpreter has no `rasterio` (confirmed above), so `from solafune_change.pipeline
+import validate_request` raised a plain `ModuleNotFoundError` several frames
+deep (via `cva.py` -> `preprocessing.py` -> `import rasterio`), which was
+**not** caught, producing an unhandled traceback in the QGIS Log Messages
+panel instead of a friendly message.
+
+Fix (`controller.py`): `on_validate()` now checks `dependency_check.embedded_mode_available()`
+*before* attempting anything, exactly like `on_run()`'s `_resolve_execution_mode()`
+already did. If embedded deps are missing it now either (a) runs validation
+through the configured External interpreter via a bounded, synchronous
+`python -m solafune_change validate --config <temp.yaml> --json` subprocess
+call (new `--json` flag added to the CLI's `validate` command), or (b) shows
+a clear, actionable warning instead of crashing if no external interpreter
+is configured either. `_resolve_execution_mode()`'s "auto" branch was also
+hardened to check that an external interpreter is actually set before
+falling back to external mode.
+
+Re-verified for real against QGIS 3.44.12 (`qgis.testing.mocked.get_iface()`,
+`QMessageBox.warning` stubbed to avoid a headless modal-dialog hang):
+
+```
+=== Scenario 1: no external interpreter configured, embedded deps missing ===
+  [QMessageBox.warning would show] Dependencies missing: ...set an External interpreter...
+state after on_validate: IDLE          <- no crash (previously: unhandled traceback)
+
+=== Scenario 2: external interpreter configured (project .venv) ===
+state after on_validate: READY
+validation_status_label: Valid
+band_table rows: 6                     <- real band metadata from the external process
+```
+
+- [x] `on_validate()` no longer crashes when embedded dependencies are missing
+- [x] `on_validate()` successfully validates via a configured External interpreter
+- [x] `solafune-change validate --config ... --json` covered by `tests/test_cli.py`
+
 ### Manual checklist (needs an interactive QGIS session — not run by this assessment; check off as you go)
 
 - [ ] Fresh QGIS profile, install plugin via **Install from ZIP**

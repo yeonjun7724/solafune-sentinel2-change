@@ -7,6 +7,7 @@ logic lives in one place instead of being scattered across UI callbacks.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import tempfile
@@ -25,7 +26,7 @@ from .dock_widget import SolafuneChangeDockWidget
 from .external_runner import ExternalAnalysisRunner
 from .result_model import UiResult, from_core_result, from_manifest_files
 from .task import EmbeddedAnalysisTask
-from .validation_model import from_core_report
+from .validation_model import UiValidationIssue, UiValidationReport, from_core_report
 
 logger = logging.getLogger(__name__)
 
@@ -227,12 +228,35 @@ class Controller:
 
     def on_validate(self) -> None:
         self._set_state("VALIDATING")
+        statuses = dependency_check.check_current_interpreter()
+        embedded_ok = dependency_check.embedded_mode_available(statuses)
+
+        if embedded_ok:
+            self._validate_embedded()
+        elif self.dock.external_interpreter_edit.text():
+            self._validate_external()
+        else:
+            QMessageBox.warning(
+                self.dock,
+                "Dependencies missing",
+                "The embedded QGIS Python interpreter is missing packages required for "
+                "validation (e.g. rasterio, geopandas) — see the Dependencies tab. Set an "
+                "'External interpreter' there (e.g. this project's .venv) and try again.",
+            )
+            self._set_state("IDLE")
+
+    def _validate_embedded(self) -> None:
         try:
             import_core()
             from solafune_change.pipeline import validate_request
             from solafune_change.types import PipelineRequest
-        except CoreImportError as exc:
-            QMessageBox.warning(self.dock, "Dependencies missing", str(exc))
+        except (CoreImportError, ImportError) as exc:
+            QMessageBox.warning(
+                self.dock,
+                "Dependencies missing",
+                f"Could not import a package the embedded core engine needs: {exc}\n\n"
+                "Set an External interpreter in the Dependencies tab instead.",
+            )
             self._set_state("IDLE")
             return
 
@@ -245,6 +269,67 @@ class Controller:
             return
 
         ui_report = from_core_report(report)
+        self.dock.set_validation_report(ui_report.status, ui_report.issues, ui_report.band_metadata)
+        self._set_state("READY" if ui_report.is_valid else "IDLE")
+
+    def _validate_external(self) -> None:
+        # Blocking on purpose: validation only reads a handful of raster headers and
+        # is normally sub-second to a few seconds, unlike a full analysis run (which
+        # always goes through the async QProcess path in _run_external). A short,
+        # bounded freeze here is a deliberate simplification, not an oversight.
+        import subprocess
+
+        python_path = self.dock.external_interpreter_edit.text()
+        config_path = self._write_temp_config()
+        try:
+            proc = subprocess.run(
+                [
+                    python_path,
+                    "-m",
+                    "solafune_change",
+                    "validate",
+                    "--config",
+                    config_path,
+                    "--json",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            QMessageBox.warning(
+                self.dock, "Validation failed", f"Could not run the external interpreter: {exc}"
+            )
+            self._set_state("IDLE")
+            return
+
+        try:
+            payload = json.loads(proc.stdout.strip().splitlines()[-1])
+        except (json.JSONDecodeError, IndexError):
+            tail = (proc.stderr or proc.stdout or "(no output)")[-2000:]
+            QMessageBox.warning(
+                self.dock,
+                "Validation failed",
+                f"Unexpected output from external validation:\n{tail}",
+            )
+            self._set_state("IDLE")
+            return
+
+        if "error" in payload:
+            QMessageBox.warning(self.dock, "Validation error", payload["error"])
+            self._set_state("IDLE")
+            return
+
+        issues = [
+            UiValidationIssue(i["severity"], i["code"], i["message"])
+            for i in payload.get("issues", [])
+        ]
+        ui_report = UiValidationReport(
+            status=payload.get("status", "invalid"),
+            issues=issues,
+            band_metadata=payload.get("band_metadata", []),
+        )
         self.dock.set_validation_report(ui_report.status, ui_report.issues, ui_report.band_metadata)
         self._set_state("READY" if ui_report.is_valid else "IDLE")
 
@@ -288,7 +373,19 @@ class Controller:
                 )
                 return None
             return "external"
-        return "embedded" if embedded_ok else "external"
+        # requested == "auto"
+        if embedded_ok:
+            return "embedded"
+        if self.dock.external_interpreter_edit.text():
+            return "external"
+        QMessageBox.warning(
+            self.dock,
+            "No usable Python environment",
+            "The embedded QGIS Python interpreter is missing required packages, and no "
+            "External interpreter is configured. Set one in the Dependencies tab (e.g. "
+            "this project's .venv/Scripts/python.exe).",
+        )
+        return None
 
     def _write_temp_config(self) -> str:
         fd, path = tempfile.mkstemp(prefix="solafune_change_", suffix=".yaml")

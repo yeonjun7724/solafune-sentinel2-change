@@ -177,16 +177,32 @@ def validate(
     after_folder: Path | None = AFTER_OPTION,
     aoi: Path | None = AOI_OPTION,
     output_dir: Path | None = OUTPUT_OPTION,
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print a single JSON object (status/issues/band_metadata) instead of a "
+        "rich table — used by the QGIS plugin's external-process validation path.",
+    ),
     verbose: bool = VERBOSE_OPTION,
 ) -> None:
     """Validate inputs and configuration without running any analysis (dry-run)."""
-    _setup_logging(verbose)
+    if not json_output:
+        _setup_logging(verbose)
     try:
         request = _load_request(config, before_folder, after_folder, aoi, output_dir)
         report = validate_request(request)
     except SolafuneChangeError as exc:
-        console.print(f"[bold red]Error:[/bold red] {exc.user_message}")
+        if json_output:
+            sys.stdout.write(json.dumps({"status": "invalid", "error": exc.user_message}) + "\n")
+        else:
+            console.print(f"[bold red]Error:[/bold red] {exc.user_message}")
         raise typer.Exit(code=1) from exc
+
+    if json_output:
+        sys.stdout.write(json.dumps(report.to_dict()) + "\n")
+        sys.stdout.flush()
+        raise typer.Exit(code=0 if report.is_valid else 1)
+
     ok = _print_validation(report)
     raise typer.Exit(code=0 if ok else 1)
 
