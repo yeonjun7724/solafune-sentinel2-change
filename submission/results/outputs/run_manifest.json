@@ -1,0 +1,76 @@
+{
+  "run_id": "20260901T080249Z-dcf2ce3e",
+  "started_at": "2026-09-01T08:02:49.592937+00:00",
+  "runtime_seconds": 29.52928869999596,
+  "before_date": "20230812",
+  "after_date": "20230902",
+  "inputs": {
+    "before_folder": "C:\\github\\solafune_ds_project\\inputs\\data\\sentinel2_20230812",
+    "after_folder": "C:\\github\\solafune_ds_project\\inputs\\data\\sentinel2_20230902",
+    "aoi_path": "C:\\github\\solafune_ds_project\\inputs\\aoi.geojson",
+    "checksums": {
+      "before_B02": "9efb24e2a3c57387c1fa7bfe61ae08a70e742c2b67f065212ea69aaca514fca7",
+      "before_B03": "d4c11f8053df67d832c25e8e37bc7be36e43099658b083c7db7bf919d21377e3",
+      "before_B04": "34d2b913ac9202573084bf88f112bf1aa32bc4412eaee835750c78c4cf89c6f1",
+      "after_B02": "33775151ff4e442753292475b371846a2d48fc2ccd09834f527f95199d9c2250",
+      "after_B03": "430448d0198e52d9fa298d50474fa26928cad6574074a6e6e863b6613d01ca40",
+      "after_B04": "9fa0954ead4339b9905ebcb5537d802e96dced6d64915784f272db0964daa695"
+    }
+  },
+  "grid": {
+    "crs": "EPSG:32735",
+    "pixel_size_m": 10.0
+  },
+  "parameters": {
+    "method": "both",
+    "normalization": "robust_median_mad",
+    "reflectance_scale": 10000.0,
+    "threshold_method": "otsu",
+    "percentile": 95.0,
+    "manual_threshold": null,
+    "morphology_enabled": true,
+    "morphology_operation": "opening_then_closing",
+    "morphology_kernel_size": 3,
+    "min_area_m2": 400.0,
+    "spatial_statistics_enabled": true,
+    "spatial_grid_size_m": 150.0,
+    "spatial_weights": "queen",
+    "permutations": 999,
+    "alpha": 0.05,
+    "fdr_correction": true,
+    "spatial_ml_enabled": false,
+    "ml_model": "isolation_forest",
+    "random_seed": 42
+  },
+  "environment": {
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "package_versions": {
+      "numpy": "2.2.6",
+      "pandas": "3.0.5",
+      "rasterio": "1.5.1",
+      "geopandas": "1.1.4",
+      "shapely": "2.1.2",
+      "pyproj": "3.7.2",
+      "scipy": "1.18.1",
+      "skimage": "0.26.0",
+      "sklearn": "1.9.0",
+      "libpysal": "4.15.0",
+      "esda": "2.10.0",
+      "folium": "0.20.0",
+      "yaml": "6.0.3"
+    }
+  },
+  "package_version": "0.1.0",
+  "output_paths": {
+    "before_stack": "C:\\github\\solafune_ds_project\\data\\processed\\sentinel2_20230812_stack.tif",
+    "after_stack": "C:\\github\\solafune_ds_project\\data\\processed\\sentinel2_20230902_stack.tif",
+    "cva_intensity": "C:\\github\\solafune_ds_project\\data\\processed\\cva_change_intensity.tif",
+    "cva_binary": "C:\\github\\solafune_ds_project\\data\\processed\\cva_change_binary.tif",
+    "baseline_intensity": "C:\\github\\solafune_ds_project\\data\\processed\\baseline_change_intensity.tif",
+    "baseline_binary": "C:\\github\\solafune_ds_project\\data\\processed\\baseline_change_binary.tif",
+    "database": "C:\\github\\solafune_ds_project\\outputs\\database\\change_analysis.gpkg",
+    "static_figure": "C:\\github\\solafune_ds_project\\outputs\\figures\\change_comparison.png",
+    "interactive_map": "C:\\github\\solafune_ds_project\\outputs\\maps\\interactive_map.html"
+  }
+}

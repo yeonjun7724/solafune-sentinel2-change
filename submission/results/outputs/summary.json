@@ -1,0 +1,16 @@
+{
+  "date_before": "20230812",
+  "date_after": "20230902",
+  "method": "cva",
+  "threshold_method": "otsu",
+  "threshold": 5.219863414764404,
+  "changed_area_m2": 37405887.03882325,
+  "changed_area_percent": 14.13830645165583,
+  "feature_count": 514,
+  "global_moran_i": 0.8335016608112154,
+  "global_moran_p": 0.001,
+  "hotspot_95_count": 95,
+  "largest_change_area_m2": 15987700.0,
+  "runtime_seconds": 29.52928869999596,
+  "random_seed": 42
+}
