@@ -63,6 +63,7 @@ class Controller:
     def _connect_signals(self) -> None:
         d = self.dock
         d.validateRequested.connect(self.on_validate)
+        d.clearInputsRequested.connect(self.on_clear_inputs)
         d.runRequested.connect(self.on_run)
         d.cancelRequested.connect(self.on_cancel)
         d.restoreDefaultsRequested.connect(self.on_restore_defaults)
@@ -225,6 +226,24 @@ class Controller:
         kwargs.pop("apply_styles", None)
         kwargs.pop("zoom_to_results", None)
         return kwargs
+
+    def on_clear_inputs(self) -> None:
+        """Reset the Inputs tab (paths, run label, validation result) and forget
+        the persisted path values too, so a stale before/after/AOI/output
+        selection from a previous session doesn't silently linger after a
+        QGIS restart."""
+        self.dock.clear_inputs()
+        settings.save_all(
+            {
+                "paths/before_folder": "",
+                "paths/after_folder": "",
+                "paths/aoi": "",
+                "paths/output_dir": "",
+                "run/label": "run",
+            }
+        )
+        self._result = None
+        self._set_state("IDLE")
 
     def on_validate(self) -> None:
         self._set_state("VALIDATING")

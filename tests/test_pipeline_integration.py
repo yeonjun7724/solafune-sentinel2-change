@@ -59,3 +59,28 @@ def test_run_pipeline_is_reproducible_with_fixed_seed(synthetic_bands, tmp_path)
     assert r1.summary["feature_count"] == r2.summary["feature_count"]
     assert r1.summary["changed_area_m2"] == r2.summary["changed_area_m2"]
     assert r1.summary["global_moran_i"] == r2.summary["global_moran_i"]
+
+
+def test_processed_dir_none_falls_back_to_sibling_of_output_dir(synthetic_bands, tmp_path):
+    """Regression test: when processed_dir is unset, outputs must land next to
+    the *resolved output_dir*, not somewhere derived from unrelated state
+    (see the matching test in test_config.py for the config-loading half of
+    this bug)."""
+    output_dir = tmp_path / "chosen_output"
+    request = PipelineRequest(
+        before_folder=synthetic_bands["before_dir"],
+        after_folder=synthetic_bands["after_dir"],
+        aoi_path=synthetic_bands["aoi_path"],
+        output_dir=output_dir,
+        processed_dir=None,
+        method="cva",
+        spatial_statistics_enabled=False,
+        spatial_ml_enabled=False,
+        min_area_m2=50.0,
+        random_seed=42,
+    )
+    result = run_pipeline(request)
+
+    expected_processed_dir = output_dir.parent / "data" / "processed"
+    assert result.cva_intensity.parent == expected_processed_dir
+    assert result.cva_intensity.exists()

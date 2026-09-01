@@ -53,3 +53,4 @@ outputs/qgis/*.zip.sha256
 
 # Local submission bundle (zips duplicating tracked repo content) - not part of git history
 /submission/
+/yeonjun/

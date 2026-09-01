@@ -73,6 +73,7 @@ def _browse_row(parent: QWidget, is_dir: bool, filter_str: str = "") -> tuple[QW
 
 class SolafuneChangeDockWidget(QDockWidget):
     validateRequested = pyqtSignal()
+    clearInputsRequested = pyqtSignal()
     runRequested = pyqtSignal()
     cancelRequested = pyqtSignal()
     restoreDefaultsRequested = pyqtSignal()
@@ -126,9 +127,20 @@ class SolafuneChangeDockWidget(QDockWidget):
         layout.addRow("Output directory:", out_row)
         layout.addRow("Run label:", self.run_label_edit)
 
+        button_row = QWidget(w)
+        button_row_layout = QHBoxLayout(button_row)
+        button_row_layout.setContentsMargins(0, 0, 0, 0)
         self.validate_button = QPushButton("Validate Inputs")
         self.validate_button.clicked.connect(self.validateRequested.emit)
-        layout.addRow(self.validate_button)
+        self.clear_inputs_button = QPushButton("Clear Inputs (초기화)")
+        self.clear_inputs_button.setToolTip(
+            "Clears the Before/After/AOI/Output paths and the validation status/results on "
+            "this tab. Does not touch Change Detection / Spatial Analysis / Outputs settings."
+        )
+        self.clear_inputs_button.clicked.connect(self.clearInputsRequested.emit)
+        button_row_layout.addWidget(self.validate_button)
+        button_row_layout.addWidget(self.clear_inputs_button)
+        layout.addRow(button_row)
 
         self.validation_status_label = QLabel()
         layout.addRow("Status:", self.validation_status_label)
@@ -517,6 +529,7 @@ class SolafuneChangeDockWidget(QDockWidget):
             self.output_dir_edit,
             self.run_label_edit,
             self.validate_button,
+            self.clear_inputs_button,
             self.method_combo,
             self.threshold_combo,
             self.stats_enabled_checkbox,
@@ -640,6 +653,19 @@ class SolafuneChangeDockWidget(QDockWidget):
         self.after_edit.setText(values.get("after_folder", ""))
         self.aoi_edit.setText(values.get("aoi", ""))
         self.output_dir_edit.setText(values.get("output_dir", ""))
+
+    def clear_inputs(self) -> None:
+        """Reset the Inputs tab to a blank slate: paths, run label, and any
+        previous Validate Inputs result. Leaves every other tab untouched."""
+        self.before_edit.clear()
+        self.after_edit.clear()
+        self.aoi_edit.clear()
+        self.output_dir_edit.clear()
+        self.run_label_edit.setText("run")
+        self.validation_status_label.setText("")
+        self.validation_status_label.setStyleSheet("")
+        self.validation_issues_text.clear()
+        self.band_table.setRowCount(0)
 
     def set_validation_report(self, status: str, issues: list, band_metadata: list) -> None:
         color = STATUS_COLORS.get(status, "#888")

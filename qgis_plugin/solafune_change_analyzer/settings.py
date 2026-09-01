@@ -8,6 +8,7 @@ round-trips through the CLI's YAML schema unmodified.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from qgis.PyQt.QtCore import QSettings
@@ -95,12 +96,24 @@ def restore_defaults() -> dict[str, Any]:
 def export_yaml(values: dict[str, Any], path: str) -> None:
     import yaml
 
+    # Always write an explicit, absolute processed_dir anchored to output_dir
+    # (matching solafune_change.pipeline's own fallback convention:
+    # output_dir.parent / "data" / "processed") rather than leaving it unset.
+    # This YAML file is frequently a short-lived temp file (the QGIS plugin's
+    # external-execution mode writes one per run under the OS temp
+    # directory), and resolving a *relative* default against that temp
+    # file's own location -- rather than against the real output directory --
+    # previously sent output to a nonsensical path.
+    output_dir = Path(values["paths/output_dir"])
+    processed_dir = str(output_dir.parent / "data" / "processed")
+
     doc = {
         "paths": {
             "aoi": values["paths/aoi"],
             "before_folder": values["paths/before_folder"],
             "after_folder": values["paths/after_folder"],
             "output_dir": values["paths/output_dir"],
+            "processed_dir": processed_dir,
         },
         "preprocessing": {
             "normalization": values["change/normalization"],

@@ -27,7 +27,14 @@ class PathsConfig:
     before_folder: Path
     after_folder: Path
     output_dir: Path
-    processed_dir: Path
+    # None when not explicitly set in the YAML: pipeline.run_pipeline() then
+    # derives it from the (always-absolute) resolved output_dir itself
+    # (output_dir.parent / "data" / "processed") rather than from where this
+    # config file happens to live. That distinction matters for a temp config
+    # file (e.g. the QGIS plugin's external-execution mode writes one under
+    # the OS temp directory) -- resolving a relative default against the temp
+    # file's *own* location previously produced nonsensical paths.
+    processed_dir: Path | None = None
 
 
 @dataclass
@@ -138,12 +145,13 @@ def load_config(config_path: str | Path, base_dir: str | Path | None = None) -> 
         if not paths_raw.get(required):
             raise ConfigurationError(f"Missing required config field: paths.{required}")
 
+    processed_dir_raw = paths_raw.get("processed_dir")
     paths = PathsConfig(
         aoi=resolve(paths_raw["aoi"]),
         before_folder=resolve(paths_raw["before_folder"]),
         after_folder=resolve(paths_raw["after_folder"]),
         output_dir=resolve(_get(paths_raw, "output_dir", "outputs")),
-        processed_dir=resolve(_get(paths_raw, "processed_dir", "data/processed")),
+        processed_dir=resolve(processed_dir_raw) if processed_dir_raw else None,
     )
 
     prep_raw = _get(raw, "preprocessing", {})
@@ -267,18 +275,25 @@ def config_to_request(config: AppConfig, run_label: str = "run") -> PipelineRequ
 def request_to_yaml_dict(request: PipelineRequest) -> dict[str, Any]:
     """Serialize a :class:`PipelineRequest` back into the ``default.yaml`` schema.
 
-    Used by the QGIS plugin's "Export configuration YAML" action.
+    Note: the QGIS plugin's actual "Export configuration YAML" action uses its
+    own independent implementation (``settings.export_yaml``), not this
+    function -- this one is exercised by ``tests/test_config.py`` as a
+    round-trip check for the CLI's config schema.
     """
+    paths: dict[str, Any] = {
+        "aoi": str(request.aoi_path),
+        "before_folder": str(request.before_folder),
+        "after_folder": str(request.after_folder),
+        "output_dir": str(request.output_dir),
+    }
+    if request.processed_dir:
+        # Omitted (not defaulted to a relative string) when unset, so a
+        # reloaded config keeps deriving it from output_dir at run time
+        # instead of resolving a relative default against wherever this
+        # YAML file happens to be saved.
+        paths["processed_dir"] = str(request.processed_dir)
     return {
-        "paths": {
-            "aoi": str(request.aoi_path),
-            "before_folder": str(request.before_folder),
-            "after_folder": str(request.after_folder),
-            "output_dir": str(request.output_dir),
-            "processed_dir": (
-                str(request.processed_dir) if request.processed_dir else "data/processed"
-            ),
-        },
+        "paths": paths,
         "preprocessing": {
             "normalization": request.normalization,
             "resampling": "bilinear",
