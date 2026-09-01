@@ -83,6 +83,13 @@ def from_manifest_files(manifest_path: str, summary_path: str) -> UiResult:
         paths={
             **output_paths,
             "database": output_paths.get("database"),
+            # run_manifest.json's output_paths uses "interactive_map"/"static_figure";
+            # the dock/controller look these up as "interactive_map_html"/
+            # "static_figure_png" (see controller.on_open_map / dock_widget). Without
+            # this remap, the Open Interactive Map button silently does nothing for
+            # every External-mode / manifest-reconstructed result.
+            "interactive_map_html": output_paths.get("interactive_map"),
+            "static_figure_png": output_paths.get("static_figure"),
             "spatial_grid_gpkg": str(Path(output_dir) / "maps" / "spatial_statistics.gpkg"),
             "report_md": str(Path(output_dir) / "report.md"),
         },

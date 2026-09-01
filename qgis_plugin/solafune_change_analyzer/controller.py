@@ -509,12 +509,28 @@ class Controller:
                 QgsMessageLog.logMessage(
                     "; ".join(warnings), "Solafune Change Analyzer", Qgis.Warning
                 )
+                QMessageBox.warning(
+                    self.dock,
+                    "Some layers did not load",
+                    f"{len(warnings)} of the expected result layer(s) could not be loaded:\n\n"
+                    + "\n".join(warnings)
+                    + "\n\nSee the log below and the QGIS Log Messages panel "
+                    "(Solafune Change Analyzer tab) for detail.",
+                )
             if self.dock.get_output_options()["zoom_to_results"] and self.iface is not None:
                 self.iface.mapCanvas().refresh()
         except Exception as exc:  # noqa: BLE001
             self.dock.append_log(f"Layer loading failed: {exc}")
             QgsMessageLog.logMessage(
                 f"Layer loading failed: {exc}", "Solafune Change Analyzer", Qgis.Critical
+            )
+            QMessageBox.critical(
+                self.dock,
+                "Layer loading failed",
+                f"The run completed, but loading its result layers into the QGIS project failed:\n\n{exc}\n\n"
+                "The output files themselves should still be on disk in the output folder "
+                "(Open Output Folder). See the QGIS Log Messages panel (Solafune Change Analyzer "
+                "tab) for the full traceback.",
             )
 
     # ------------------------------------------------------------------ cancel
