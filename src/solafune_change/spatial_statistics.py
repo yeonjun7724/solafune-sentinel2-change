@@ -279,7 +279,19 @@ def compute_local_statistics(
     gdf["lisa_cluster"] = lisa_cluster
 
     np.random.seed(seed)
-    gi = G_Local(y, w_binary, transform="B", star=True, permutations=permutations, seed=seed)
+    # n_jobs=1: esda's G_Local defaults to n_jobs=-1 (one joblib/loky worker
+    # process per CPU core) for the permutation inference. Spawning
+    # subprocess workers from inside a GUI-hosted embedded interpreter (the
+    # QGIS plugin's embedded execution mode) is fragile on Windows -- the
+    # child re-executes the host process as if it were __main__, which can
+    # crash immediately and surface as a bare "worker process was
+    # unexpectedly terminated" joblib error with no useful traceback.
+    # Sequential execution avoids that risk entirely; 999 permutations over
+    # a modest grid is fast enough single-threaded that the parallelism
+    # isn't worth the reliability cost.
+    gi = G_Local(
+        y, w_binary, transform="B", star=True, permutations=permutations, seed=seed, n_jobs=1
+    )
     gi_z = np.asarray(gi.Zs)
     gi_p = np.asarray(gi.p_sim if permutations > 0 else gi.p_norm)
     gdf["gi_star"] = gi.Gs
