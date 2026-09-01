@@ -1,0 +1,52 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# --- Data (large / regenerable) ---
+data/processed/*.tif
+!data/processed/.gitkeep
+outputs/**/*.tif
+outputs/**/*.png
+outputs/**/*.html
+outputs/**/*.gpkg
+outputs/**/*.zip
+!outputs/figures/.gitkeep
+!outputs/maps/.gitkeep
+!outputs/database/.gitkeep
+!outputs/statistics/.gitkeep
+!outputs/qgis/.gitkeep
+
+# Keep small preview/summary artifacts even though the folders above are ignored
+!outputs/summary.json
+!outputs/run_manifest.json
+!outputs/quality_report.json
+!outputs/statistics/global_moran.json
+!outputs/statistics/spatial_statistics.csv
+!outputs/figures/*_preview.png
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- QGIS build artifacts ---
+qgis_plugin/**/__pycache__/
+qgis_plugin/solafune_change_analyzer/vendor/solafune_change/
+build/
+outputs/qgis/*.zip
+outputs/qgis/*.zip.sha256
+
+# Original raw assignment bundle kept outside inputs/ for provenance; not part of deliverable
+/Technical Assignment_DS/

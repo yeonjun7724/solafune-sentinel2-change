@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Solafune Change Analyzer - Help</title></head>
+<body>
+<h1>Solafune Change Analyzer</h1>
+
+<h2>Quick start</h2>
+<ol>
+  <li>Open the dock (toolbar icon or Plugins &gt; Solafune Change Analyzer).</li>
+  <li>On the <b>Inputs</b> tab, pick the before/after Sentinel-2 folders (each must contain B02/B03/B04
+      as GeoTIFF or JP2), an AOI vector file, and an output directory.</li>
+  <li>Click <b>Validate Inputs</b>. Fix any errors shown before continuing.</li>
+  <li>Configure <b>Change Detection</b> and, optionally, <b>Spatial Analysis</b>.</li>
+  <li>Check the <b>Dependencies</b> tab: if "Embedded QGIS Python" is not ready (common on Windows/OSGeo4W
+      installs, which do not ship rasterio/scikit-learn/libpysal by default), point "External interpreter"
+      at a Python environment that has the CLI's dependencies installed (e.g. this project's <code>.venv</code>).</li>
+  <li>Click <b>Run Analysis</b> on the <b>Run &amp; Results</b> tab.</li>
+</ol>
+
+<h2>Supported input structure</h2>
+<pre>
+before_folder/
+  B02.tif (or *_B02*.tif / *_B02*.jp2)
+  B03.tif
+  B04.tif
+after_folder/
+  B02.tif
+  B03.tif
+  B04.tif
+</pre>
+<p>Band 2 = Blue, Band 3 = Green, Band 4 = Red. NDVI is <b>not</b> computed anywhere in this
+plugin because no NIR band (B08) is required or read.</p>
+
+<h2>Methods</h2>
+<ul>
+  <li><b>Provided baseline</b>: an independent reimplementation of the assignment's example
+      algorithm (per-pixel Euclidean distance across bands, min-max normalized). No radiometric
+      normalization; a single extreme pixel can compress the whole intensity scale.</li>
+  <li><b>Robust RGB CVA</b>: per-band differences standardized with median/MAD, combined as
+      <code>sqrt(sum(z_b^2))</code>. This is the primary, recommended method.</li>
+</ul>
+
+<h2>Threshold methods</h2>
+<p><b>Otsu</b> (automatic bimodal threshold), <b>Percentile</b> (a chosen percentile of the
+valid-pixel intensity distribution), or <b>Manual</b> (an absolute value you supply).</p>
+
+<h2>Spatial statistics</h2>
+<ul>
+  <li><b>Global Moran's I</b>: is change intensity spatially autocorrelated overall, versus what
+      random spatial arrangement would produce (permutation test)?</li>
+  <li><b>Local Moran's I (LISA)</b>: per-cell High-High / Low-Low / High-Low / Low-High cluster
+      membership.</li>
+  <li><b>Getis-Ord Gi*</b>: statistically significant hot spots / cold spots of change intensity.</li>
+  <li><b>FDR correction</b>: Benjamini-Hochberg adjustment of Gi* p-values, which controls the false
+      discovery rate that arises from running one significance test per grid cell.</li>
+</ul>
+<p>A Gi* p-value/q-value describes <i>spatial pattern significance</i>, not a probability that a
+given change is real mining activity - see the "confidence" field below.</p>
+
+<h2>Experimental spatial ML</h2>
+<p>Isolation Forest (anomaly ranking) or DBSCAN (spatial clustering) over the same analysis grid,
+using robust-scaled spectral/spatial-context features. <b>There are no ground-truth labels for
+this AOI</b>: outputs are an exploratory ranking, not a validated classifier, and no
+accuracy/precision/recall is computed. Stability is instead assessed via spatial block bootstrap
+(top-K anomaly overlap) and hyperparameter sensitivity - see the run's <code>report.md</code>.</p>
+
+<h2>Output layers</h2>
+<p>AOI, Before/After RGB, Baseline Intensity/Binary, CVA Intensity/Binary, Change Features
+(polygons), Analysis Grid, LISA Clusters, Gi* Hotspots, and (if ML is enabled) Spatial Anomalies -
+all grouped under "Solafune Change Analysis - &lt;run id&gt;" in the layer tree, styled with the
+bundled QML files.</p>
+
+<h2>GeoPackage tables</h2>
+<p><code>change_features</code> and <code>spatial_grid</code> (real geometry columns),
+<code>run_metadata</code> (inputs, checksums, parameters, package version, seed),
+<code>quality_checks</code> (validation issues/warnings for that run).</p>
+
+<h2>The "confidence" field</h2>
+<p><code>confidence</code> on each change feature is a documented 0-1 <b>heuristic score</b>
+(threshold excess + intensity consistency + patch size + hotspot significance + ML anomaly rank),
+<b>not</b> a calibrated probability of true change.</p>
+
+<h2>Limitations</h2>
+<ul>
+  <li>No NDVI (no NIR band provided).</li>
+  <li>No cloud/shadow mask (no Scene Classification Layer provided).</li>
+  <li>Only two dates: seasonal vs. persistent change cannot be separated.</li>
+  <li>No ground truth: no accuracy claims anywhere in this plugin or its outputs.</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li><b>"Embedded QGIS Python (missing dependencies)"</b>: expected on most Windows/OSGeo4W QGIS
+      installs. Use the Dependencies tab to point at an external interpreter instead.</li>
+  <li><b>Run fails immediately</b>: check the Run &amp; Results log panel, then the detailed log
+      referenced in the error dialog (QGIS Log Messages panel, "Solafune Change Analyzer" tab).</li>
+  <li><b>Nothing loads after a run</b>: check "Load results into current QGIS project" is enabled
+      on the Outputs tab, and that the output directory is writable.</li>
+</ul>
+
+<h2>Dependency setup (external environment)</h2>
+<pre>
+cd path\to\solafune-sentinel2-change
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\pip install -e .
+</pre>
+<p>Then in the Dependencies tab, browse to <code>.venv\Scripts\python.exe</code> and click
+"Check dependencies".</p>
+</body>
+</html>

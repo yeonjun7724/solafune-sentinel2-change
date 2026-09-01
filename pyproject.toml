@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solafune-change"
+version = "0.1.0"
+description = "Reproducible Sentinel-2 change detection, spatial statistics and unsupervised spatial ML pipeline for the Solafune technical assessment"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Solafune Technical Assessment Submission" }]
+
+dependencies = [
+    "numpy>=1.26,<2.3",
+    "pandas>=2.0",
+    "rasterio>=1.3",
+    "geopandas>=0.14",
+    "shapely>=2.0",
+    "pyproj>=3.6",
+    "scipy>=1.11",
+    "scikit-image>=0.22",
+    "scikit-learn>=1.3",
+    "libpysal>=4.9",
+    "esda>=2.5",
+    "pyogrio>=0.7",
+    "matplotlib>=3.7",
+    "folium>=0.15",
+    "PyYAML>=6.0",
+    "typer>=0.9",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+    "black",
+    "mypy",
+    "pre-commit",
+]
+
+[project.scripts]
+solafune-change = "solafune_change.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["qgis_plugin/solafune_change_analyzer/vendor", "build", "inputs", "Technical Assignment_DS"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false
+disallow_untyped_defs = false
+exclude = ["tests/", "qgis_plugin/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: tests that require the real assignment input data",
+]

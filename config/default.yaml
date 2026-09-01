@@ -1,0 +1,72 @@
+# Default configuration for the Solafune Sentinel-2 change analysis pipeline.
+# All paths are resolved relative to the repository root unless absolute.
+# See README.md sections "Configuration" for a field-by-field explanation.
+
+paths:
+  aoi: inputs/aoi.geojson
+  before_folder: inputs/data/sentinel2_20230812
+  after_folder: inputs/data/sentinel2_20230902
+  output_dir: outputs
+  processed_dir: data/processed
+
+preprocessing:
+  # band-wise robust normalization applied to the "after" date before differencing.
+  # options: robust_median_mad | percentile_matching | pif_linear | none
+  normalization: robust_median_mad
+  # resampling used only if the two dates are not already on the same grid.
+  # continuous reflectance bands always use bilinear; this key only documents intent.
+  resampling: bilinear
+  # which date's grid is treated as the reference grid for reprojection/resampling.
+  reference_date: before
+  # Sentinel-2 surface reflectance is stored as scaled 16-bit integers.
+  # DN / reflectance_scale ~= surface reflectance (0-1). Documented assumption,
+  # see README "Key Assumptions" - no product XML/metadata was provided with the assignment.
+  reflectance_scale: 10000.0
+  nodata_value: 0
+
+change_detection:
+  # 'baseline' reproduces the provided example_change_detection.py idea (Euclidean distance,
+  # min-max normalized). 'cva' is the improved Robust RGB Change Vector Analysis.
+  # 'both' runs both (required for the baseline-vs-CVA comparison figure/report section) and
+  # is the default so a plain `solafune-change all` produces the full comparison out of the box.
+  method: both
+  threshold_method: otsu   # otsu | percentile | manual
+  percentile: 95.0
+  manual_threshold: null
+  morphology:
+    enabled: true
+    operation: opening_then_closing  # opening | closing | opening_then_closing | none
+    structure_size: 3
+    fill_holes: false
+  min_area_m2: 400.0   # 4 pixels at 10 m GSD
+
+spatial_statistics:
+  enabled: true
+  grid_size_m: 150.0
+  weights: queen        # queen | knn
+  knn_k: 8
+  permutations: 999
+  alpha: 0.05
+  fdr_correction: true
+  random_seed: 42
+
+spatial_ml:
+  enabled: false   # experimental - opt-in via --ml flag or here
+  model: isolation_forest   # isolation_forest | dbscan | hdbscan
+  contamination: 0.1
+  clustering:
+    algorithm: dbscan
+    eps: 1.5
+    min_samples: 5
+  random_seed: 42
+  use_coordinates: false
+  n_bootstrap: 20
+
+output:
+  write_stacks: true
+  write_intermediate: true
+  create_interactive_map: true
+  create_qgis_styles: true
+
+run:
+  random_seed: 42
