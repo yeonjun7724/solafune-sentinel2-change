@@ -11,6 +11,6 @@
   "global_moran_p": 0.001,
   "hotspot_95_count": 95,
   "largest_change_area_m2": 15987700.0,
-  "runtime_seconds": 56.906162999992375,
+  "runtime_seconds": 29.52928869999596,
   "random_seed": 42
 }

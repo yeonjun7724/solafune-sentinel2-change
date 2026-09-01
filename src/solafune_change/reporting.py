@@ -188,7 +188,19 @@ The AOI is an active open-pit mining site. Spatially coherent, high-magnitude RG
 - Moisture or water-extent variation (pit water, settling ponds)
 - Vegetation removal at the pit margins
 
-RGB imagery from two dates alone **cannot distinguish** between these causes, and cannot rule out illumination/haze/shadow or (small) co-registration artifacts contributing to some detections. Detections are reported as *consistent with* surface disturbance, not as a confirmed land-cover transition.
+**Why this reads as real surface change rather than noise.** Two independent pieces of evidence support that interpretation: (1) the change is spatially coherent, not scattered — Global Moran's I = {global_moran_i:.3f} (permutation p = {global_moran_p:.4f}) shows changed pixels cluster strongly rather than appearing at random locations, which random sensor/atmospheric noise would not produce; and (2) the largest detected objects are large, contiguous, high-magnitude regions that align with the visible pit and waste-rock footprint, not isolated single-pixel flecks.
+
+**Distinguishing real change from confounds.** RGB imagery from two dates alone cannot fully separate genuine surface activity from the alternatives below — each is addressed explicitly, not silently assumed away:
+
+| Possible confound | Could it explain some detections here? | How this pipeline addresses it |
+|---|---|---|
+| Clouds / cloud shadow | Not ruled out — no Scene Classification Layer (SCL) or cloud mask was supplied with the inputs | Not filtered; explicitly flagged as an unresolved limitation (Section 6), not silently ignored |
+| Terrain / pit-wall shadow | Possible at steep pit edges, where illumination geometry differs slightly between the two acquisition dates | Robust median/MAD radiometric normalization plus Otsu thresholding reduce (not eliminate) shadow-driven false positives; morphological opening removes single-pixel speckle typical of shadow noise |
+| Seasonal change (vegetation, soil moisture) | Low risk for this specific pair (~3 weeks apart), but the pipeline does not verify this in general | Cannot be separated from persistent change with only two dates; flagged as a limitation, and Section 7 recommends a denser time series |
+| Whole-scene brightness / illumination difference between acquisitions | Likely present to some degree between any two Sentinel-2 scenes | Directly targeted by the `robust_median_mad` radiometric normalization step (Section 3) before CVA is computed; this is precisely why baseline (no normalization) is far noisier than CVA in Section 4 |
+| Small co-registration offset | Possible at sharp edges (pit rim, road margins) | Not explicitly corrected; the minimum-change-area filter (400 m^2) removes some of the small spurious polygons this would produce |
+
+None of these confounds can be fully excluded with two RGB-only dates and no cloud mask. Detections are therefore reported as *consistent with* surface disturbance, never as a confirmed land-cover transition or a confirmed absence of clouds/shadow/seasonal effects.
 
 ## 6. Limitations
 
