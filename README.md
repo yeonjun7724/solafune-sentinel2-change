@@ -104,7 +104,7 @@ flowchart TD
     E --> F[postprocessing<br/>morphology + min-area filter]
     F --> G[vectorization<br/>polygonize, area/perimeter, confidence]
     G --> H[spatial_statistics<br/>grid, Global/Local Moran's I, Gi*, FDR]
-    H --> I[spatial_ml (opt-in)<br/>Isolation Forest / DBSCAN + stability]
+    H --> I["spatial_ml (opt-in)<br/>Isolation Forest / DBSCAN + stability"]
     H --> J[database.py<br/>GeoPackage: features, grid, run_metadata, quality_checks]
     I --> J
     J --> K[visualization.py<br/>static PNG + interactive HTML + QML styles]
