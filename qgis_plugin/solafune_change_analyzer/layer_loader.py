@@ -53,11 +53,11 @@ def load_results(
             warnings.append(f"Layer '{display_name}' failed to load (invalid raster): {path}")
             return
         project.addMapLayer(layer, False)
-        group.addLayer(layer)
+        node = group.addLayer(layer)
         layer.setCustomProperty("solafune_change/run_id", result.run_id)
         if style_key:
             style_manager.apply_style(layer, style_key)
-        layer.setItemVisibilityChecked(visible)
+        node.setItemVisibilityChecked(visible)
         loaded.append(display_name)
 
     def _add_vector(
@@ -77,11 +77,11 @@ def load_results(
             )
             return
         project.addMapLayer(layer, False)
-        group.addLayer(layer)
+        node = group.addLayer(layer)
         layer.setCustomProperty("solafune_change/run_id", result.run_id)
         if style_key:
             style_manager.apply_style(layer, style_key)
-        layer.setItemVisibilityChecked(visible)
+        node.setItemVisibilityChecked(visible)
         loaded.append(display_name)
 
     # --- Inputs ---

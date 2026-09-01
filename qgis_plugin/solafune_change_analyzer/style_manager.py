@@ -43,7 +43,13 @@ def apply_style(layer, style_key: str) -> bool:
         logger.warning("Bundled style file missing: %s", qml_path)
         return False
 
-    ok, message = layer.loadNamedStyle(str(qml_path))
+    # QgsMapLayer.loadNamedStyle's C++ signature is loadNamedStyle(uri, bool
+    # &resultFlag, ...); PyQGIS turns the by-reference resultFlag into a
+    # second *return* value, so the tuple order is (message, ok) -- NOT
+    # (ok, message). Unpacking it the other way around silently treats every
+    # successful load (message="") as a failure, which was skipping the
+    # raster rescale/repaint step for every styled layer.
+    message, ok = layer.loadNamedStyle(str(qml_path))
     if not ok:
         logger.warning("Failed to apply style %s to layer %s: %s", qml_name, layer.name(), message)
         return False
