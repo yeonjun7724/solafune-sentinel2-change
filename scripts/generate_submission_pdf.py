@@ -1133,11 +1133,63 @@ def build_story(styles: dict) -> list:
         Paragraph(
             "Interpretation: the strong, statistically significant spatial clustering of change "
             "(Moran's I = 0.834, p = 0.001) is consistent with genuine, structured surface change rather than "
-            "noise. However, two RGB-only dates cannot by themselves confirm whether the change is pit "
-            "expansion, waste-rock placement, road changes, moisture change, or vegetation removal \u2014 so "
-            "report.md deliberately uses \u201cconsistent with\u201d phrasing and stops short of any definitive "
-            "land-use classification.",
+            "noise \u2014 clustering is exactly what real, connected surface disturbance (excavation, waste-rock "
+            "placement, land clearing, vegetation removal) would produce, and exactly what random sensor or "
+            "atmospheric noise would not. However, two RGB-only dates cannot by themselves confirm which of "
+            "those specific activities is responsible, and cannot rule out non-mining confounds. Both "
+            "report.md and this guide deliberately use \u201cconsistent with\u201d phrasing and stop short of any "
+            "definitive land-use classification.",
             s["body"],
+        )
+    )
+    story.append(Paragraph("Interpreting uncertainty: real change vs. clouds, shadow, season, brightness", s["h3"]))
+    story.append(
+        Paragraph(
+            "Each alternative explanation for a detection is addressed explicitly below, rather than assumed "
+            "away:",
+            s["body"],
+        )
+    )
+    story.append(
+        make_table(
+            ["Possible confound", "Could it explain a detection here?", "How this pipeline addresses it"],
+            [
+                [
+                    "Clouds / cloud shadow",
+                    "Not ruled out \u2014 no Scene Classification Layer (SCL) or cloud mask was supplied",
+                    "Not filtered; explicitly flagged as an unresolved limitation, never silently ignored",
+                ],
+                [
+                    "Terrain / pit-wall shadow",
+                    "Possible at steep pit edges where illumination geometry differs slightly between dates",
+                    "Robust median/MAD normalization plus Otsu thresholding reduce (not eliminate) shadow-driven false positives; morphological opening removes single-pixel shadow speckle",
+                ],
+                [
+                    "Seasonal change (vegetation, soil moisture)",
+                    "Low risk for this pair (~3 weeks apart), but not verified in general",
+                    "Cannot be separated from persistent change with only two dates; a denser time series is recommended in report.md's Operational Recommendations",
+                ],
+                [
+                    "Whole-scene brightness / illumination difference",
+                    "Likely present to some degree between any two acquisitions",
+                    "Directly targeted by the robust_median_mad radiometric-normalization step before CVA is computed \u2014 this is precisely why baseline (no normalization) is far noisier than CVA",
+                ],
+                [
+                    "Small co-registration offset",
+                    "Possible at sharp edges (pit rim, road margins)",
+                    "Not explicitly corrected; the minimum-change-area filter (400 m\u00b2) removes some of the resulting small spurious polygons",
+                ],
+            ],
+            s,
+            col_widths=[110, 165, 180],
+        )
+    )
+    story.append(
+        Paragraph(
+            "None of these confounds can be fully excluded with two RGB-only dates and no cloud mask. This "
+            "table is reproduced verbatim in <font face='Courier'>report.md</font> Section 5 (Interpretation), "
+            "so it travels with every run, not just this document.",
+            s["caption"],
         )
     )
 
