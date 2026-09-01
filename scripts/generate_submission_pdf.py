@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-"""Generates a detailed Korean-language PDF usage guide for the submission bundle.
+"""Generates a detailed English-language PDF usage guide for the submission bundle.
 
 Covers both the QGIS plugin version and the script/CLI version of
 solafune-change, step by step, plus project background, algorithm detail,
 database schema, dependency setup options (including a no-separate-venv
 path verified against a real QGIS install), and the bugs found and fixed
 during development. Requires ``reportlab`` (dev-only dependency; not part
-of the core pipeline's runtime requirements) and a Korean-capable TrueType
-font on the system (defaults to Windows' bundled Malgun Gothic; override
-with --font/--font-bold if unavailable).
+of the core pipeline's runtime requirements) and a TrueType font on the
+system (defaults to Windows' bundled Malgun Gothic, which also renders
+Latin text cleanly; override with --font/--font-bold if unavailable).
 
 Usage:
     python scripts/generate_submission_pdf.py [--out submission/Usage_Guide.pdf]
@@ -53,8 +53,8 @@ GREEN = colors.HexColor("#1b6b1b")
 def register_fonts(regular: str, bold: str) -> None:
     if not Path(regular).exists() or not Path(bold).exists():
         raise SystemExit(
-            f"Korean font not found at {regular} / {bold}. "
-            "Pass --font/--font-bold pointing at a Korean-capable TTF pair."
+            f"Font not found at {regular} / {bold}. "
+            "Pass --font/--font-bold pointing at a TTF pair (any Unicode-capable font works)."
         )
     pdfmetrics.registerFont(TTFont("KR", regular))
     pdfmetrics.registerFont(TTFont("KR-Bold", bold))
@@ -159,7 +159,7 @@ def bullet_list(items: list[str], styles: dict) -> ListFlowable:
     return ListFlowable(
         [ListItem(Paragraph(item, styles["body"]), leftIndent=8) for item in items],
         bulletType="bullet",
-        start="•",
+        start="\u2022",
         leftIndent=14,
         spaceBefore=2,
         spaceAfter=8,
@@ -210,7 +210,7 @@ def _footer(canvas, doc) -> None:
     canvas.saveState()
     canvas.setFont("KR", 8)
     canvas.setFillColor(GRAY)
-    canvas.drawString(20 * mm, 12 * mm, "Solafune Sentinel-2 Change Analysis — Usage Guide")
+    canvas.drawString(20 * mm, 12 * mm, "Solafune Sentinel-2 Change Analysis \u2014 Usage Guide")
     canvas.drawRightString(190 * mm, 12 * mm, f"{doc.page}")
     canvas.restoreState()
 
@@ -219,43 +219,44 @@ def build_story(styles: dict) -> list:
     s = styles
     story: list = []
 
-    # ================================================================== 표지
+    # ================================================================== Cover page
     story.append(Spacer(1, 30))
     story.append(Paragraph("Solafune Sentinel-2 Change Analysis", s["title"]))
     story.append(
-        Paragraph("상세 사용 설명서 — QGIS 플러그인 버전 &amp; 스크립트(CLI) 버전", s["subtitle"])
+        Paragraph("Detailed Usage Guide &mdash; QGIS Plugin Edition &amp; Script (CLI) Edition", s["subtitle"])
     )
     story.append(hr(color=NAVY, thickness=1.4, space_before=10, space_after=16))
     story.append(
         Paragraph(
-            "이 문서는 제출 번들(<font face='Courier'>submission/</font>)에 포함된 두 실행 방식 — "
-            "① QGIS 안에서 GUI로 실행하는 <b>플러그인 버전</b>과 "
-            "② 터미널에서 명령어로 실행하는 <b>스크립트(CLI) 버전</b> — 의 설치·설정·사용법을 "
-            "화면/필드 단위로 정리하고, 프로젝트 배경, 알고리즘 근거, 데이터베이스 스키마, "
-            "실제 개발 중 발견하고 수정한 버그, 테스트 검증 기록까지 함께 담았습니다. "
-            "두 버전 모두 동일한 분석 엔진(<font face='Courier'>solafune_change</font> 코어 패키지)을 "
-            "공유하므로 결과가 동일합니다.",
+            "This document walks through installation, configuration, and usage &mdash; screen by "
+            "screen, field by field &mdash; for both execution modes included in the submission bundle "
+            "(<font face='Courier'>submission/</font>): (1) the <b>QGIS plugin edition</b>, run interactively "
+            "inside QGIS, and (2) the <b>script (CLI) edition</b>, run from a terminal. It also covers "
+            "project background, the rationale behind each algorithm, the spatial database schema, bugs "
+            "actually found and fixed during development, and the test/verification record. Both editions "
+            "share the exact same analysis engine (the <font face='Courier'>solafune_change</font> core "
+            "package), so results are identical regardless of which one you use.",
             s["body"],
         )
     )
     story.append(Spacer(1, 12))
     story.append(
         make_table(
-            ["항목", "내용"],
+            ["Item", "Value"],
             [
                 [
-                    "GitHub 저장소",
+                    "GitHub repository",
                     "https://github.com/yeonjun7724/solafune-sentinel2-change (Public)",
                 ],
-                ["AOI", "Zambia 노천 광산, 약 264.6 km² (EPSG:32735, UTM 35S, 10m 해상도)"],
-                ["비교 시점", "2023-08-12 vs 2023-09-02 (Sentinel-2 B02/B03/B04)"],
+                ["AOI", "Open-pit mine, Zambia, approx. 264.6 km\u00b2 (EPSG:32735, UTM 35S, 10 m resolution)"],
+                ["Compared acquisitions", "2023-08-12 vs 2023-09-02 (Sentinel-2 bands B02/B03/B04)"],
                 [
-                    "핵심 결과",
-                    "변화 객체 514개 / 총 변화면적 37,405,887 m² (AOI의 14.14%) / Global Moran's I = 0.834 (p=0.001)",
+                    "Headline results",
+                    "514 change features / total changed area 37,405,887 m\u00b2 (14.14% of AOI) / Global Moran's I = 0.834 (p=0.001)",
                 ],
-                ["대상 QGIS 버전", "3.28 이상 (3.44.12에서 실제 설치·실행 검증)"],
-                ["대상 Python 버전", "3.10 이상 (3.12에서 개발/테스트)"],
-                ["테스트", "pytest 65개 전부 통과, ruff/black 클린"],
+                ["Target QGIS version", "3.28 or later (installed and run on a real 3.44.12 instance)"],
+                ["Target Python version", "3.10 or later (developed/tested on 3.12)"],
+                ["Tests", "65 pytest cases, all passing; ruff/black clean"],
             ],
             s,
             col_widths=[110, 340],
@@ -263,73 +264,79 @@ def build_story(styles: dict) -> list:
     )
     story.append(PageBreak())
 
-    # ================================================================== 목차
-    story.append(Paragraph("목차", s["h1"]))
+    # ================================================================== Table of contents
+    story.append(Paragraph("Table of Contents", s["h1"]))
     toc_rows = [
-        ["0", "제출 번들 구성 (전체)"],
-        ["1", "원본 과제 요구사항 대조"],
-        ["PART A", "QGIS 플러그인 버전 — 설치부터 결과 확인까지"],
-        ["A.1–A.2", "사전 준비 / 설치 단계"],
-        ["A.3–A.4", "의존성 확인 및 설치 (venv 없이 하는 법 포함, 실측 검증)"],
-        ["A.5", "Dock Widget 6개 탭 전체 필드 상세"],
-        ["A.6", "실행 진행 단계 (12단계) 상세"],
-        ["A.7", "결과 레이어 구조와 스타일"],
-        ["A.8–A.9", "Processing Toolbox / Before-After 비교"],
-        ["A.10", "새로 추가된 Clear Inputs(초기화) 버튼"],
-        ["A.11–A.12", "문제 해결 / 체크섬 검증"],
-        ["PART B", "스크립트(CLI) 버전 — 설치부터 결과 확인까지"],
-        ["B.1–B.9", "설치, 실행, CLI 명령어/옵션 전체 레퍼런스"],
-        ["B.10", "config/default.yaml 전체 필드 레퍼런스"],
-        ["B.11–B.12", "테스트/재빌드 / 문제 해결"],
-        ["2", "실제 분석 결과 상세"],
-        ["3", "알고리즘 선택과 근거 (수식 포함)"],
-        ["4", "공간 데이터베이스 스키마 전체"],
-        ["5", "개발 중 실제로 발견하고 수정한 버그 (8건)"],
-        ["6", "테스트 및 검증 기록"],
-        ["7", "주요 가정 및 한계"],
-        ["부록", "SQL 쿼리 예시 / 용어 설명"],
+        ["0", "Submission bundle contents (full layout)"],
+        ["1", "Original assignment requirements vs. delivered work"],
+        ["PART A", "QGIS Plugin Edition \u2014 install through results"],
+        ["A.1\u2013A.2", "Prerequisites / installation steps"],
+        ["A.3\u2013A.4", "Dependency check and setup (no-venv path included, field-verified)"],
+        ["A.5", "Dock widget \u2014 all 6 tabs, every field, in detail"],
+        ["A.6", "Run progress \u2014 all 12 pipeline stages"],
+        ["A.7", "Result layer tree and styling"],
+        ["A.8\u2013A.9", "Processing Toolbox / Before-After comparison"],
+        ["A.10", "Newly added Clear Inputs (reset) button"],
+        ["A.11\u2013A.12", "Troubleshooting / checksum verification"],
+        ["PART B", "Script (CLI) Edition \u2014 install through results"],
+        ["B.1\u2013B.9", "Install, run, full CLI command/option reference"],
+        ["B.10", "Full config/default.yaml field reference"],
+        ["B.11\u2013B.12", "Tests / rebuild / troubleshooting"],
+        ["2", "Actual analysis results, in detail"],
+        ["3", "Algorithm choices and rationale (with formulas)"],
+        ["4", "Full spatial database schema"],
+        ["5", "Bugs actually found and fixed during development (8)"],
+        ["6", "Test and verification record"],
+        ["7", "Key assumptions and limitations"],
+        ["Appendix", "Example SQL queries / glossary"],
     ]
-    story.append(make_table(["절", "내용"], toc_rows, s, col_widths=[70, 380]))
+    story.append(make_table(["Sec.", "Contents"], toc_rows, s, col_widths=[70, 380]))
     story.append(PageBreak())
 
-    # ================================================================== 0. 제출 번들 구성
-    story.append(Paragraph("0. 제출 번들 구성 (전체)", s["h1"]))
+    # ================================================================== 0. Submission bundle contents
+    story.append(Paragraph("0. Submission Bundle Contents (Full Layout)", s["h1"]))
     story.append(
         Paragraph(
-            "<font face='Courier'>submission/</font> 폴더 하나에 실행 파일 + 최종 결과물 + 원본 데이터 + "
-            "이 문서까지 전부 들어 있습니다. (이 폴더 자체는 git에 커밋되지 않는 로컬 전용 제출용 묶음입니다.)",
+            "The <font face='Courier'>submission/</font> folder contains everything needed for review in "
+            "one place: both runnable editions, the actual final outputs, a copy of the raw input data, "
+            "and this document.",
             s["body"],
         )
     )
     story.append(
         make_table(
-            ["경로", "설명", "QGIS 필요?"],
+            ["Path", "Description", "QGIS needed?"],
             [
-                ["Usage_Guide.pdf", "이 문서", "-"],
+                ["Usage_Guide.pdf", "This document", "-"],
                 [
                     "solafune_change_analyzer.zip (+.sha256)",
-                    "① QGIS 플러그인 설치 파일 (분석 엔진 내장). 체크섬 파일 포함",
-                    "필요",
+                    "(1) QGIS plugin install package (analysis engine vendored inside). Checksum file included",
+                    "Yes",
                 ],
                 [
                     "solafune-sentinel2-change-source.zip",
-                    '② 스크립트(CLI) 버전 — GitHub "Download ZIP"과 동일한 구조(solafune-sentinel2-change-master/ 폴더로 감싸짐), git archive HEAD 스냅샷이라 커밋 내용과 100% 일치',
-                    "불필요",
+                    "(2) Script (CLI) edition, and also the complete source repository as a single archive "
+                    "(wrapped in a solafune-sentinel2-change-master/ folder, matching GitHub's \u201cDownload "
+                    "ZIP\u201d layout). Built with git archive from the exact commit pushed to GitHub, excluding "
+                    "only the submission/ and yeonjun/ packaging folders themselves (see the note below)",
+                    "No",
                 ],
                 [
                     "data/",
-                    "③ 원본 입력 위성영상 별도 복사본 (아오이/밴드 GeoTIFF, 확인용)",
-                    "불필요",
+                    "(3) A standalone copy of the raw input satellite imagery (AOI + band GeoTIFFs), for quick inspection",
+                    "No",
                 ],
                 [
                     "results/outputs/",
-                    "④ 실제로 실행해서 나온 최종 산출물 원본 — GeoPackage DB, 정적 비교 그림, 인터랙티브 지도, 공간통계 JSON/CSV, report.md 등. 재실행 없이 바로 열어볼 수 있음",
-                    "불필요 (QGIS로 열어보면 더 좋음)",
+                    "(4) The actual final outputs produced by a real pipeline run \u2014 GeoPackage database, "
+                    "static comparison figure, interactive map, spatial-statistics JSON/CSV, report.md, and more. "
+                    "Open directly, no re-run required",
+                    "No (opens best in QGIS)",
                 ],
                 [
                     "results/data_processed/",
-                    "④ 스택 GeoTIFF, baseline/CVA intensity·binary 래스터 원본",
-                    "불필요",
+                    "(4) The stacked GeoTIFF and the baseline/CVA intensity and binary change rasters, as produced",
+                    "No",
                 ],
             ],
             s,
@@ -338,61 +345,68 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         Paragraph(
-            '<b>②번이 "github zip으로 묶은 파일"에 해당합니다</b>: GitHub 저장소 페이지의 '
-            "Code → Download ZIP을 눌렀을 때와 동일한 폴더 구조(<font face='Courier'>"
-            "solafune-sentinel2-change-master/</font>로 감싸짐)로 만들었고, 실제로 GitHub에 푸시된 "
-            "최신 커밋을 <font face='Courier'>git archive</font>로 그대로 떠낸 것이라 웹에서 직접 "
-            "다운로드받는 것과 내용이 100% 동일합니다.",
+            "<b>Item (2) is the \u201centire repository as one zip file.\u201d</b> It is built directly from the "
+            "commit actually pushed to GitHub via <font face='Courier'>git archive</font>, wrapped in the same "
+            "<font face='Courier'>solafune-sentinel2-change-master/</font> folder GitHub's Code &rarr; Download "
+            "ZIP button produces \u2014 the full source code, tests, docs, and configuration, byte-for-byte from "
+            "that commit. It is at the same time the \u201cscript/CLI edition\u201d package: unzip it and it is "
+            "immediately runnable (see PART B). One deliberate exclusion: the "
+            "<font face='Courier'>submission/</font> and <font face='Courier'>yeonjun/</font> packaging folders "
+            "(this very bundle, and the author's personal working notes) are left out of the archive, since "
+            "including them would make the zip contain a copy of itself and grow without bound every time it is "
+            "rebuilt. Everything needed to build and run the project from scratch is included.",
             s["highlight"],
         )
     )
     story.append(
         Paragraph(
-            '<b>④번(results/)이 "최종 output 결과물"</b>입니다: 코드를 실행하지 않아도 실제 분석이 끝난 '
-            "상태의 GeoPackage, 그림, 지도, 통계 파일을 바로 열어볼 수 있도록 그대로 복사해 두었습니다. "
-            "(② 소스 zip 안에는 용량 문제로 이 결과 파일들이 포함되어 있지 않으므로, 재실행 없이 바로 "
-            "결과만 보고 싶다면 이 results/ 폴더를 여세요.)",
+            "<b>Item (4) (results/) is the \u201cfinal output artifacts.\u201d</b> These are copies of what the "
+            "pipeline actually produced on a real run, placed here so they can be opened immediately without "
+            "re-running anything \u2014 GeoPackage, figures, map, statistics. (Item (2), the source zip, does "
+            "not include these output files, to keep its size reasonable; open results/ instead if you just "
+            "want to see the outcome without executing the pipeline.)",
             s["highlight"],
         )
     )
     story.append(PageBreak())
 
-    # ================================================================== 1. 요구사항 대조
-    story.append(Paragraph("1. 원본 과제 요구사항 대조", s["h1"]))
+    # ================================================================== 1. Requirements comparison
+    story.append(Paragraph("1. Original Assignment Requirements vs. Delivered Work", s["h1"]))
     story.append(
         Paragraph(
-            "<font face='Courier'>instructions.pdf</font>가 요구한 5개 파트를 실제 산출물과 대조한 결과입니다.",
+            "The five parts required by <font face='Courier'>instructions.pdf</font>, checked one by one "
+            "against what was actually delivered.",
             s["body"],
         )
     )
     story.append(
         make_table(
-            ["Part", "요구사항", "실제 구현/검증"],
+            ["Part", "Requirement", "Delivered / verified"],
             [
                 [
                     "1. Data Preparation",
-                    "B2/B3/B4 로드, CRS/transform/dimensions 검증, 밴드 스택",
-                    "validation.py로 검증, data/processed/sentinel2_&lt;date&gt;_stack.tif 파일명까지 정확히 일치 생성",
+                    "Load B2/B3/B4, verify CRS/transform/dimensions, stack bands",
+                    "Verified via validation.py; produces data/processed/sentinel2_&lt;date&gt;_stack.tif with exactly the expected naming",
                 ],
                 [
                     "2. Change Detection",
-                    "예제 참고하되 그대로 복사 금지 + 자체 알고리즘",
-                    "baseline.py(예제 독립 재구현) + cva.py(robust CVA, 주 분석법)",
+                    "May reference the example, but must not copy it verbatim; own algorithm required",
+                    "baseline.py (independent reimplementation of the example's idea) plus cva.py (robust CVA, the primary method) \u2014 both implemented, each producing intensity and binary rasters",
                 ],
                 [
                     "3. Feature Extraction &amp; Storage",
-                    "폴리곤화, SQLite/PostGIS, id/date_before/date_after/area_m2/confidence/geometry",
-                    "GeoPackage(SQLite)에 실제 geometry 컬럼, 요구 필드 + 15개 추가 필드",
+                    "Polygonize, store in SQLite or PostGIS, id/date_before/date_after/area_m2/confidence/geometry",
+                    "Polygonized via vectorization.py, stored in GeoPackage (SQLite-based) with a real geometry column; all required fields present plus 15 additional fields (spatial statistics, ML)",
                 ],
                 [
                     "4. Visualization",
-                    "AOI 폴리곤, 변화 래스터/폴리곤 (인터랙티브는 plus)",
-                    "정적 PNG + Folium 인터랙티브 HTML(오프라인 동작) 둘 다",
+                    "AOI polygon, change raster/polygon display (interactive is a plus)",
+                    "Both a static comparison figure (PNG) and a Folium interactive map (HTML, works fully offline) were actually generated and verified",
                 ],
                 [
                     "5. Analysis &amp; Interpretation",
-                    "report.md: Method/Results/Interpretation",
-                    "7개 섹션으로 확장, 실제 실행 수치 반영",
+                    "report.md with Method / Results / Interpretation sections",
+                    "Expanded to 7 sections including those three, populated with numbers from an actual run",
                 ],
             ],
             s,
@@ -401,98 +415,101 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         Paragraph(
-            "Deliverables(Code/Database/README.md/report.md) 전부 충족 + 과제가 요구하지 않은 공간통계, "
-            "비지도 공간 ML, QGIS 플러그인, 65개 자동화 테스트까지 추가 구현했습니다.",
+            "All required deliverables (code, database, README.md, report.md) are present. On top of that, "
+            "spatial statistics, unsupervised spatial ML, a QGIS plugin, and a 65-case automated test suite "
+            "were added, none of which the assignment required.",
             s["body"],
         )
     )
     story.append(PageBreak())
 
     # ================================================================== PART A
-    story.append(Paragraph("PART A. QGIS 플러그인 버전", s["h1"]))
+    story.append(Paragraph("PART A. QGIS Plugin Edition", s["h1"]))
 
-    story.append(Paragraph("A.1 사전 준비", s["h2"]))
+    story.append(Paragraph("A.1 Prerequisites", s["h2"]))
     story.append(
         bullet_list(
             [
-                "QGIS 3.28 이상 (개발/검증은 QGIS 3.44.12, OSGeo4W 빌드 기준)",
-                "설치 파일: <font face='Courier'>solafune_change_analyzer.zip</font>",
+                "QGIS 3.28 or later (developed and verified against QGIS 3.44.12, OSGeo4W build)",
+                "Install package: <font face='Courier'>solafune_change_analyzer.zip</font>",
             ],
             s,
         )
     )
 
-    story.append(Paragraph("A.2 설치 단계", s["h2"]))
+    story.append(Paragraph("A.2 Installation Steps", s["h2"]))
     story.append(
         bullet_list(
             [
-                "QGIS 실행",
-                "메뉴 <b>Plugins → Manage and Install Plugins → Install from ZIP</b>",
-                "<font face='Courier'>solafune_change_analyzer.zip</font> 선택 → <b>Install Plugin</b>",
-                '<b>Installed</b> 탭에서 "Solafune Change Analyzer" 체크 확인',
-                "툴바 아이콘 클릭 또는 <b>Plugins → Solafune Change Analyzer</b>로 Dock Widget 열기",
+                "Launch QGIS",
+                "Menu: <b>Plugins \u2192 Manage and Install Plugins \u2192 Install from ZIP</b>",
+                "Select <font face='Courier'>solafune_change_analyzer.zip</font> \u2192 <b>Install Plugin</b>",
+                "In the <b>Installed</b> tab, confirm \u201cSolafune Change Analyzer\u201d is checked",
+                "Open the dock widget via the toolbar icon or <b>Plugins \u2192 Solafune Change Analyzer</b>",
             ],
             s,
         )
     )
 
-    story.append(Paragraph("A.3 왜 의존성 문제가 생기는가", s["h2"]))
+    story.append(Paragraph("A.3 Why Dependencies Are Missing", s["h2"]))
     story.append(
         Paragraph(
-            "이 플러그인의 분석 엔진은 rasterio, geopandas, scikit-image, scikit-learn, libpysal, esda, "
-            "matplotlib, folium 같은 순수 지리정보 과학 패키지에 의존합니다. 그런데 <b>Windows/OSGeo4W용 "
-            "QGIS는 자체 Python에 이 패키지들을 기본 포함하지 않습니다</b> (QGIS 자체 GIS 기능은 "
-            "GDAL/PROJ를 C++ 레벨에서 직접 쓰기 때문에 Python 패키지로 rasterio 등을 넣어둘 필요가 없기 "
-            "때문입니다). 실제로 QGIS 3.44.12에서 확인한 결과:",
+            "The plugin's analysis engine depends on standard geospatial-science Python packages: rasterio, "
+            "geopandas, scikit-image, scikit-learn, libpysal, esda, matplotlib, and folium. <b>The Windows/"
+            "OSGeo4W build of QGIS does not ship these inside its own Python by default</b> (QGIS's own GIS "
+            "functionality talks to GDAL/PROJ directly at the C++ level, so it has no built-in need for a "
+            "Python-level rasterio, etc.). Checked against a real QGIS 3.44.12 install:",
             s["body"],
         )
     )
     story.append(
         make_table(
-            ["패키지", "QGIS 기본 내장 여부", "필요한 기능"],
+            ["Package", "Bundled with QGIS?", "What it's needed for"],
             [
                 [
                     "numpy, geopandas, shapely, pyproj, scipy, PyYAML, matplotlib, folium",
-                    "있음 (Ready)",
-                    "기본 실행, 시각화",
+                    "Yes (Ready)",
+                    "Core execution, visualization",
                 ],
                 [
                     "rasterio",
-                    "없음 (Missing)",
-                    "래스터 입출력 — 가장 핵심, 없으면 아무 분석도 안 됨",
+                    "No (Missing)",
+                    "Raster I/O \u2014 the most critical one; nothing runs without it",
                 ],
-                ["scikit-image", "없음 (Missing)", "형태학적 후처리"],
-                ["libpysal, esda", "없음 (Missing)", "공간통계 (Moran's I, Getis-Ord Gi*)"],
-                ["scikit-learn", "없음 (Missing)", "실험적 비지도 공간 ML"],
+                ["scikit-image", "No (Missing)", "Morphological post-processing"],
+                ["libpysal, esda", "No (Missing)", "Spatial statistics (Moran's I, Getis-Ord Gi*)"],
+                ["scikit-learn", "No (Missing)", "Experimental unsupervised spatial ML"],
             ],
             s,
             col_widths=[195, 100, 155],
         )
     )
 
-    story.append(Paragraph("A.4 의존성 설치 방법 — 두 가지 옵션", s["h2"]))
+    story.append(Paragraph("A.4 Two Ways to Install the Dependencies", s["h2"]))
     story.append(
         Paragraph(
-            '"별도 .venv 폴더를 꼭 만들어야 하나?"라는 질문에 대한 답: <b>아닙니다, 안 만들어도 됩니다.</b> '
-            "실제로 QGIS 3.44.12에서 두 방법을 모두 실측 검증했습니다.",
+            "\u201cDo I have to set up a separate <font face='Courier'>.venv</font> folder?\u201d Short answer: "
+            "<b>no, you don't.</b> Both options below were actually field-tested end to end against a real "
+            "QGIS 3.44.12 install.",
             s["body"],
         )
     )
 
     story.append(
-        Paragraph("옵션 1 (권장, 별도 폴더 불필요): QGIS 자체 Python에 직접 설치", s["h3"])
+        Paragraph("Option 1 (recommended, no extra folder): install straight into QGIS's own Python", s["h3"])
     )
     story.append(
         Paragraph(
-            "QGIS가 내장한 Python 인터프리터 자체에 <font face='Courier'>--user</font> 옵션으로 "
-            '패키지를 한 번만 설치하면, 그 뒤로는 Dependencies 탭이 자동으로 "Ready"를 표시하고 '
-            "<b>Embedded 모드가 그대로 작동합니다</b> — External interpreter를 따로 설정할 필요가 전혀 없습니다. "
-            "설치 위치는 <font face='Courier'>%APPDATA%\\Python\\Python312\\site-packages</font>(사용자 폴더, "
-            "관리자 권한 불필요)이고, QGIS의 <font face='Courier'>sys.path</font>에 이미 자동으로 포함되어 있습니다.",
+            "Run a single <font face='Courier'>pip install --user</font> against QGIS's own bundled Python "
+            "interpreter. After that, the Dependencies tab automatically reports \u201cReady,\u201d and "
+            "<b>Embedded mode works as-is</b> \u2014 no External interpreter configuration needed at all. "
+            "Packages land under <font face='Courier'>%APPDATA%\\Python\\Python312\\site-packages</font> (a "
+            "per-user folder, no admin rights required), which is already on QGIS's "
+            "<font face='Courier'>sys.path</font>.",
             s["body"],
         )
     )
-    story.append(Paragraph("Windows (QGIS 설치 경로가 다르면 그 경로로 바꾸세요):", s["body"]))
+    story.append(Paragraph("Windows (adjust the path if your QGIS is installed elsewhere):", s["body"]))
     story.append(
         code_block(
             'cd "C:\\Program Files\\QGIS 3.44.12\\bin"\n'
@@ -503,54 +520,55 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         Paragraph(
-            "<b>실측 검증 결과</b> (QGIS 3.44.12, 이 명령 실행 후): Dependencies 탭의 모든 필수 패키지가 "
-            "Ready로 전환되었고, rasterio가 QGIS 자체 GDAL과 같은 프로세스 안에서 충돌 없이 공존했으며 "
-            "(CRS 조회 등 정상), <b>Validate Inputs와 전체 파이프라인 실행(Run Analysis, 공간통계+실험적 "
-            "ML 포함)이 임베디드 모드에서 처음부터 끝까지 성공</b>했습니다 (514개 변화 객체, Global Moran's "
-            "I=0.804 — 정상 수치). 다만 이는 이 QGIS 버전·패키지 버전 조합에서 검증된 결과이며, 다른 "
-            "QGIS/OS 조합에서는 GDAL 버전 차이로 인한 충돌 가능성이 이론적으로 남아있습니다 (아래 옵션 2가 "
-            "그 위험을 원천 차단하는 대안입니다).",
+            "<b>Field-verified result</b> (QGIS 3.44.12, after running the command above): every required "
+            "package in the Dependencies tab flipped to Ready; rasterio coexisted with QGIS's own GDAL in the "
+            "same process without conflict (CRS lookups etc. worked normally); and <b>both Validate Inputs and "
+            "a full pipeline run (Run Analysis, with spatial statistics and experimental ML enabled) succeeded "
+            "start to finish in Embedded mode</b> (514 change features, Global Moran's I = 0.804 \u2014 a sane "
+            "value). This was verified for this specific QGIS-version / package-version combination; other "
+            "QGIS/OS combinations could in theory still hit a GDAL version conflict (Option 2 below eliminates "
+            "that risk entirely).",
             s["highlight"],
         )
     )
 
-    story.append(Paragraph("옵션 2 (격리, 더 안전): 별도 .venv + External interpreter", s["h3"]))
+    story.append(Paragraph("Option 2 (isolated, safer): separate .venv + External interpreter", s["h3"]))
     story.append(
         Paragraph(
-            "옵션 1은 QGIS와 같은 프로세스 안에 새 GDAL을 얹는 방식이라 QGIS 버전에 따라 충돌 가능성이 "
-            "이론적으로 있습니다. 완전히 격리하고 싶다면(다른 QGIS 플러그인이나 QGIS 자체 동작에 영향을 "
-            "주고 싶지 않다면), 별도 프로세스에서 실행되는 독립 <font face='Courier'>.venv</font>를 만들고 "
-            "플러그인이 <b>External interpreter</b> 모드로 그 프로세스를 호출하게 하는 방법입니다. "
-            "PART B의 B.2 설치 단계로 <font face='Courier'>.venv</font>를 만든 뒤, Dock Widget "
-            "Dependencies 탭에서 그 <font face='Courier'>python.exe</font> 경로를 지정하면 됩니다.",
+            "Option 1 loads a second GDAL into the same process as QGIS, which carries a theoretical conflict "
+            "risk depending on the QGIS build. If you want full isolation (so nothing you install can affect "
+            "QGIS itself or other plugins), create an independent <font face='Courier'>.venv</font> that runs "
+            "in a separate process, and point the plugin at it via <b>External interpreter</b> mode. Follow "
+            "PART B's B.2 installation steps to create the <font face='Courier'>.venv</font>, then set that "
+            "environment's <font face='Courier'>python.exe</font> path in the Dock Widget's Dependencies tab.",
             s["body"],
         )
     )
     story.append(
         make_table(
-            ["", "옵션 1: QGIS 자체 Python에 설치", "옵션 2: 별도 .venv"],
+            ["", "Option 1: install into QGIS's own Python", "Option 2: separate .venv"],
             [
-                ["별도 폴더 필요", "불필요", "필요 (.venv/)"],
-                ["실행 프로세스", "QGIS와 동일 프로세스 (임베디드)", "별도 프로세스 (외부 호출)"],
+                ["Extra folder needed", "No", "Yes (.venv/)"],
+                ["Execution process", "Same process as QGIS (embedded)", "Separate process (external call)"],
                 [
-                    "설정 단계",
-                    "pip 명령 1번 실행",
-                    ".venv 생성 + 설치 + Dependencies 탭에서 경로 지정",
+                    "Setup steps",
+                    "One pip command",
+                    "Create .venv + install + set the path in the Dependencies tab",
                 ],
                 [
-                    "GDAL 충돌 위험",
-                    "이론상 있음 (실측으로는 QGIS 3.44.12에서 없었음)",
-                    "없음 (완전히 격리된 별도 프로세스)",
+                    "GDAL conflict risk",
+                    "Theoretical (none observed on QGIS 3.44.12 in testing)",
+                    "None (fully isolated separate process)",
                 ],
                 [
-                    "속도",
-                    "약간 빠름 (프로세스 생성 오버헤드 없음)",
-                    "약간 느림 (매 실행마다 새 프로세스)",
+                    "Speed",
+                    "Slightly faster (no process-spawn overhead)",
+                    "Slightly slower (a new process per run)",
                 ],
                 [
-                    "권장 대상",
-                    "빠르고 간단하게 쓰고 싶은 경우",
-                    "다른 QGIS 플러그인/프로젝트에 영향 주고 싶지 않은 경우",
+                    "Recommended for",
+                    "Wanting something quick and simple",
+                    "Not wanting to affect other QGIS plugins/projects",
                 ],
             ],
             s,
@@ -558,33 +576,39 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("A.5 Dock Widget 6개 탭 전체 필드 상세", s["h2"]))
+    story.append(Paragraph("A.5 Dock Widget \u2014 All 6 Tabs, Every Field", s["h2"]))
 
-    story.append(Paragraph("① Inputs 탭", s["h3"]))
+    story.append(Paragraph("\u2460 Inputs tab", s["h3"]))
     story.append(
         make_table(
-            ["필드", "설명"],
+            ["Field", "Description"],
             [
                 [
                     "Before / After Sentinel-2 folder",
-                    "각 폴더 안에 B02/B03/B04 GeoTIFF 또는 JP2가 <b>직접</b> 있어야 함 (하위 폴더 안 됨). 예: inputs/data/sentinel2_20230812",
+                    "Each folder must contain B02/B03/B04 GeoTIFF or JP2 files <b>directly</b> (not in a "
+                    "subfolder). Example: inputs/data/sentinel2_20230812",
                 ],
                 [
                     "AOI vector file",
-                    "GeoJSON/GeoPackage/Shapefile 중 하나. WGS84가 아니어도 자동으로 래스터 CRS에 맞춰 재투영됨",
+                    "GeoJSON, GeoPackage, or Shapefile. Does not need to be in WGS84 \u2014 it is automatically "
+                    "reprojected to match the raster CRS",
                 ],
-                ["Output directory", "결과가 저장될 폴더. 없으면 자동 생성됨"],
+                ["Output directory", "Where results are written. Created automatically if it doesn't exist"],
                 [
                     "Run label",
-                    "실행을 구분하기 위한 라벨(선택). run_id 앞에 붙어서 레이어 그룹명/run_metadata에 표시됨. 비워두면 타임스탬프만 사용",
+                    "Optional label to tell runs apart. Prepended to the run_id and shown in the layer group "
+                    "name / run_metadata. Left blank, only a timestamp is used",
                 ],
                 [
-                    "Validate Inputs 버튼",
-                    "CRS/해상도/밴드 존재 여부 등을 검사하고 Valid/Valid with warnings/Invalid 배지 + 밴드 메타데이터 표를 보여줌",
+                    "Validate Inputs button",
+                    "Checks CRS, resolution, and band presence, then shows a Valid / Valid with warnings / "
+                    "Invalid badge plus a band metadata table",
                 ],
                 [
-                    "Clear Inputs (초기화) 버튼",
-                    "(신규) 위 4개 경로 필드와 Run label, 검증 결과를 모두 비움. 이전 세션에 저장된 값도 함께 지워서 QGIS를 재시작해도 옛날 경로가 남아있지 않게 함. 다른 탭(Change Detection 등) 설정은 건드리지 않음",
+                    "Clear Inputs (reset) button",
+                    "(New) Clears all four path fields, the Run label, and the validation display. Also "
+                    "clears the values persisted from the previous session, so stale paths don't linger after "
+                    "restarting QGIS. Does not touch settings in other tabs (Change Detection, etc.)",
                 ],
             ],
             s,
@@ -592,30 +616,37 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("② Change Detection 탭", s["h3"]))
+    story.append(Paragraph("\u2461 Change Detection tab", s["h3"]))
     story.append(
         make_table(
-            ["필드", "설명"],
+            ["Field", "Description"],
             [
                 [
-                    "분석 방법",
-                    "Provided baseline(예제 방식만) / Robust RGB CVA(개선 방식만) / <b>Run both(기본값, 둘 다 실행하고 비교)</b>",
+                    "Method",
+                    "Provided baseline (example method only) / Robust RGB CVA (improved method only) / "
+                    "<b>Run both (default, runs both and compares)</b>",
                 ],
                 [
-                    "방사보정",
-                    "None(보정 없음) / <b>Robust median/MAD(기본값)</b> — 두 시점 공통 유효 픽셀의 중앙값·MAD로 선형 매칭 / Percentile matching — 2·98백분위수로 매칭 / PIF(Pseudo-Invariant Features) — 변화가 적은 픽셀만 골라 선형회귀",
+                    "Radiometric normalization",
+                    "None (no correction) / <b>Robust median/MAD (default)</b> \u2014 linear matching using the "
+                    "median and MAD of valid pixels common to both dates / Percentile matching \u2014 matched "
+                    "using the 2nd/98th percentiles / PIF (Pseudo-Invariant Features) \u2014 linear regression "
+                    "over pixels with low change only",
                 ],
                 [
-                    "Threshold 방법",
-                    "<b>Otsu(기본값)</b> — 자동 이진화 / Percentile — 지정 백분위수 이상을 변화로 판정 / Manual — 절대값 직접 지정",
+                    "Threshold method",
+                    "<b>Otsu (default)</b> \u2014 automatic binarization / Percentile \u2014 flags anything above "
+                    "a given percentile as change / Manual \u2014 an explicit absolute value",
                 ],
                 [
                     "Morphology",
-                    "이진 래스터에 opening/closing 형태학적 연산 적용 여부, 커널 크기(px)",
+                    "Whether to apply opening/closing morphological operations to the binary raster, and the "
+                    "kernel size (px)",
                 ],
                 [
                     "Minimum change area",
-                    "이보다 작은 연결 객체는 노이즈로 간주해 제거 (m² 단위, 픽셀 면적 기준 자동 환산)",
+                    "Connected components smaller than this are treated as noise and dropped (in m\u00b2; "
+                    "converted automatically from pixel area)",
                 ],
             ],
             s,
@@ -623,37 +654,44 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("③ Spatial Analysis 탭", s["h3"]))
+    story.append(Paragraph("\u2462 Spatial Analysis tab", s["h3"]))
     story.append(
         make_table(
-            ["필드", "설명"],
+            ["Field", "Description"],
             [
-                ["Enable spatial statistics", "격자 집계 기반 공간통계 활성화 (기본 켜짐)"],
+                ["Enable spatial statistics", "Turns on grid-aggregated spatial statistics (on by default)"],
                 [
                     "Grid cell size",
-                    "분석 격자 한 변 길이(m). 기본 150m — 픽셀 단위로 통계를 내지 않고 이 크기로 집계 후 계산 (dense weight matrix를 피하기 위함)",
+                    "Side length of the analysis grid, in meters. Default 150 m \u2014 statistics are computed "
+                    "after aggregating to this grid rather than at pixel resolution, to avoid a dense spatial "
+                    "weight matrix",
                 ],
                 [
                     "Spatial weights",
-                    "Queen contiguity(기본, 변+꼭짓점 접촉) / Rook contiguity(변만 접촉) / K nearest neighbors",
+                    "Queen contiguity (default, shares an edge or a corner) / Rook contiguity (edge only) / "
+                    "K nearest neighbors",
                 ],
                 [
                     "Permutations",
-                    "Monte Carlo permutation 검정 반복 횟수 (기본 999회, seed 고정으로 재현 가능)",
+                    "Number of Monte Carlo permutation-test iterations (default 999, reproducible via a fixed seed)",
                 ],
-                ["Significance alpha", "유의수준 (기본 0.05)"],
+                ["Significance alpha", "Significance level (default 0.05)"],
                 [
                     "FDR correction",
-                    "Benjamini-Hochberg 보정 — Gi* 다중 지역 검정으로 인한 과잉 유의성 문제를 완화",
+                    "Benjamini-Hochberg correction \u2014 mitigates the inflated significance that comes from "
+                    "testing many locations at once with Gi*",
                 ],
                 [
                     "Global/Local Moran's I",
-                    "Global: 전체 변화강도의 공간적 자기상관 / Local(LISA): 셀 단위 High-High/Low-Low/High-Low/Low-High 군집 분류",
+                    "Global: spatial autocorrelation of overall change intensity. Local (LISA): per-cell "
+                    "High-High / Low-Low / High-Low / Low-High cluster classification",
                 ],
-                ["Getis-Ord Gi*", "통계적으로 유의한 hotspot/coldspot 탐지 (90/95/99% 구간)"],
+                ["Getis-Ord Gi*", "Detects statistically significant hot spots / cold spots (90/95/99% bands)"],
                 [
-                    "실험적 비지도 공간 ML",
-                    "정답 레이블이 전혀 없으므로 화면에 항상 경고 문구 표시. Isolation Forest(이상치 점수) 또는 DBSCAN(공간 군집화) 중 선택, contamination/eps/min_samples 등 하이퍼파라미터 조정 가능",
+                    "Experimental unsupervised spatial ML",
+                    "Since there is no ground truth at all, a warning is always shown on screen. Choose "
+                    "Isolation Forest (anomaly score) or DBSCAN (spatial clustering), with tunable "
+                    "hyperparameters (contamination / eps / min_samples, etc.)",
                 ],
             ],
             s,
@@ -661,63 +699,69 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("④ Outputs 탭", s["h3"]))
+    story.append(Paragraph("\u2463 Outputs tab", s["h3"]))
     story.append(
         bullet_list(
             [
-                "GeoTIFF 스택/중간 산출물 저장 여부, 인터랙티브 지도 생성 여부, QML 스타일 자동 적용 여부",
-                "결과를 현재 QGIS 프로젝트에 자동 로드할지, 로드 후 결과로 화면을 자동 확대(zoom)할지",
-                "실패/취소된 실행의 임시 파일을 보존할지 여부",
+                "Whether to keep intermediate GeoTIFFs/stacks, whether to build the interactive map, whether "
+                "to auto-apply QML styling",
+                "Whether to auto-load results into the current QGIS project, and whether to zoom to them afterward",
+                "Whether to keep temporary files from a failed or cancelled run",
             ],
             s,
         )
     )
 
-    story.append(Paragraph("⑤ Run &amp; Results 탭", s["h3"]))
+    story.append(Paragraph("\u2464 Run &amp; Results tab", s["h3"]))
     story.append(
         bullet_list(
             [
-                "<b>Run Analysis</b> — 진행률 바, 현재 단계, 경과 시간, 실시간 로그 표시",
-                "<b>Cancel</b> — 언제든 안전하게 중단 (중간 산출물이 완료된 결과로 표시되지 않도록 원자적 파일 쓰기 사용)",
-                "완료 시 요약(변화 객체 수, 총 변화면적, Global Moran's I, permutation p-value, 95% hotspot 개수, 평균 confidence, 실행 시간)과 함께 "
-                "<b>Open Report / Open Interactive Map / Open Output Folder / Add Results to Map / Copy Summary / Save Log</b> 버튼 활성화",
+                "<b>Run Analysis</b> \u2014 shows a progress bar, current stage, elapsed time, and a live log",
+                "<b>Cancel</b> \u2014 safe to stop at any point (atomic file writes ensure a partial output is "
+                "never mistaken for a completed result)",
+                "On completion, a summary (feature count, total changed area, Global Moran's I, permutation "
+                "p-value, 95% hotspot count, mean confidence, run time) is shown alongside <b>Open Report / "
+                "Open Interactive Map / Open Output Folder / Add Results to Map / Copy Summary / Save Log</b> "
+                "buttons",
             ],
             s,
         )
     )
 
-    story.append(Paragraph("⑥ Dependencies 탭", s["h3"]))
+    story.append(Paragraph("\u2465 Dependencies tab", s["h3"]))
     story.append(
         bullet_list(
             [
-                "Execution environment: Automatic(기본, 임베디드가 가능하면 임베디드, 아니면 외부) / Embedded 강제 / External 강제",
-                "External interpreter 경로 지정 + <b>Check dependencies</b> 버튼으로 그 인터프리터의 패키지 상태 실시간 조회",
-                "패키지별 Ready/Missing 상태 표 (버전 정보 포함)",
+                "Execution environment: Automatic (default \u2014 embedded when possible, external otherwise) / "
+                "force Embedded / force External",
+                "Set an External interpreter path and check its package status live with the <b>Check "
+                "dependencies</b> button",
+                "A Ready/Missing table per package, including version info",
                 "Restore defaults / Import configuration YAML / Export configuration YAML",
             ],
             s,
         )
     )
 
-    story.append(Paragraph("A.6 실행 진행 단계 (12단계)", s["h2"]))
+    story.append(Paragraph("A.6 Run Progress (12 Stages)", s["h2"]))
     story.append(
         make_table(
-            ["진행률", "단계"],
+            ["Progress", "Stage"],
             [
-                ["0–5%", "Input discovery — B02/B03/B04 파일 탐색"],
-                ["5–12%", "Validation — CRS/transform/dimensions/AOI overlap 검증"],
-                ["12–22%", "Raster alignment — 격자 정렬(필요시 리샘플링), AOI 마스킹"],
-                ["22–30%", "Stack creation — RGB 순서 밴드 스택 GeoTIFF 생성"],
-                ["30–42%", "Radiometric normalization — 방사보정 적용"],
-                ["42–55%", "Baseline detection — 예제 방식 변화탐지"],
-                ["55–68%", "Robust CVA — 개선 변화탐지"],
-                ["68–75%", "Threshold &amp; morphology — 이진화 + 후처리"],
-                ["75–82%", "Polygon extraction — 벡터화, confidence 산출"],
-                ["82–90%", "Spatial statistics — Moran's I / Gi* / FDR"],
-                ["90–94%", "Experimental spatial ML — (활성화 시) Isolation Forest/DBSCAN"],
+                ["0\u20135%", "Input discovery \u2014 locating B02/B03/B04 files"],
+                ["5\u201312%", "Validation \u2014 CRS / transform / dimensions / AOI overlap checks"],
+                ["12\u201322%", "Raster alignment \u2014 grid alignment (resampling if needed), AOI masking"],
+                ["22\u201330%", "Stack creation \u2014 building the RGB-ordered band-stack GeoTIFF"],
+                ["30\u201342%", "Radiometric normalization \u2014 applying the chosen correction"],
+                ["42\u201355%", "Baseline detection \u2014 example-method change detection"],
+                ["55\u201368%", "Robust CVA \u2014 improved-method change detection"],
+                ["68\u201375%", "Threshold &amp; morphology \u2014 binarization plus post-processing"],
+                ["75\u201382%", "Polygon extraction \u2014 vectorization, confidence scoring"],
+                ["82\u201390%", "Spatial statistics \u2014 Moran's I / Gi* / FDR"],
+                ["90\u201394%", "Experimental spatial ML \u2014 (if enabled) Isolation Forest / DBSCAN"],
                 [
-                    "94–100%",
-                    "Database &amp; visualization &amp; report — GeoPackage, 그림, 지도, report.md",
+                    "94\u2013100%",
+                    "Database, visualization &amp; report \u2014 GeoPackage, figures, map, report.md",
                 ],
             ],
             s,
@@ -725,7 +769,7 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("A.7 결과 레이어 구조", s["h2"]))
+    story.append(Paragraph("A.7 Result Layer Tree", s["h2"]))
     story.append(
         code_block(
             "Solafune Change Analysis - <run id>\n"
@@ -742,67 +786,73 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         Paragraph(
-            "각 레이어는 미리 만들어진 QML 스타일이 자동 적용됩니다 (연속형 래스터는 실제 데이터 범위에 맞춰 "
-            "런타임에 색상 램프를 재조정). 존재하지 않는 결과(예: ML 비활성화 시 Spatial Anomalies)는 "
-            "그룹 자체가 생성되지 않습니다.",
+            "Each layer gets a pre-built QML style applied automatically (continuous rasters have their color "
+            "ramp rescaled at runtime to the actual data range). Groups for results that don't exist for a "
+            "given run (e.g. Spatial Anomalies when ML is disabled) are simply not created.",
             s["body"],
         )
     )
 
-    story.append(Paragraph("A.8 Processing Toolbox에서 사용", s["h2"]))
+    story.append(Paragraph("A.8 Using the Processing Toolbox", s["h2"]))
     story.append(
         Paragraph(
-            "Processing Toolbox → <b>Solafune Geospatial Analytics → Sentinel-2 Change Analysis</b>에서도 "
-            "동일한 엔진을 실행할 수 있습니다 (15개 파라미터, 배치 처리·모델 빌더 연동에 유용). Dock Widget과 "
-            "동일한 request builder를 거쳐 동일한 <font face='Courier'>run_pipeline()</font>을 호출하므로 "
-            "분석 로직이 중복되지 않습니다.",
+            "The same engine can also be run from Processing Toolbox &rarr; <b>Solafune Geospatial Analytics "
+            "&rarr; Sentinel-2 Change Analysis</b> (15 parameters, useful for batch processing and Model "
+            "Builder integration). It goes through the same request builder as the dock widget and calls the "
+            "same <font face='Courier'>run_pipeline()</font>, so the analysis logic is never duplicated.",
             s["body"],
         )
     )
 
-    story.append(Paragraph("A.9 Before/After 비교", s["h2"]))
+    story.append(Paragraph("A.9 Before/After Comparison", s["h2"]))
     story.append(
         Paragraph(
-            '결과 레이어 그룹의 "Before RGB"/"After RGB" 레이어의 가시성 체크박스를 번갈아 켜고 끄거나, '
-            "레이어 패널에서 투명도(Opacity)를 조절해 두 시점을 비교할 수 있습니다. RGB 스트레치는 두 시점에 "
-            "동일하게 적용되어 있어(before 이미지 기준 2·98백분위수 스트레치를 after에도 동일 적용) 비교가 "
-            "왜곡되지 않습니다.",
+            "Toggle the visibility checkboxes on the \u201cBefore RGB\u201d/\u201cAfter RGB\u201d layers in the "
+            "result layer group, or adjust their opacity in the layer panel, to compare the two dates. The RGB "
+            "stretch is applied consistently across both dates (the 2nd/98th-percentile stretch computed on the "
+            "before image is reused for the after image), so the visual comparison isn't skewed by "
+            "independently-stretched images.",
             s["body"],
         )
     )
 
-    story.append(Paragraph("A.10 문제 해결 (Troubleshooting)", s["h2"]))
+    story.append(Paragraph("A.10 Troubleshooting", s["h2"]))
     story.append(
         make_table(
-            ["증상", "원인 / 해결"],
+            ["Symptom", "Cause / fix"],
             [
                 [
-                    '"Validate Inputs" 클릭 시 오류창 (예전엔 크래시)',
-                    "임베디드 Python에 rasterio 등이 없음 → Dependencies 탭에서 상태 확인, A.4의 옵션 1 또는 2로 설치",
+                    "An error dialog on \u201cValidate Inputs\u201d (used to be a hard crash)",
+                    "rasterio, etc. missing from the embedded Python \u2014 check status in the Dependencies "
+                    "tab, install via Option 1 or 2 in A.4",
                 ],
                 [
-                    "Before/After 폴더 선택했는데 밴드를 못 찾음",
-                    "폴더 안에 B02/B03/B04 파일이 직접 있어야 함 (하위 폴더에 있으면 안 됨)",
+                    "Before/After folder selected but no bands are found",
+                    "B02/B03/B04 files must sit directly inside the folder (not in a subfolder)",
                 ],
                 [
-                    "이전 세션의 잘못된 경로가 계속 남아있음",
-                    "Inputs 탭의 <b>Clear Inputs(초기화)</b> 버튼으로 경로와 저장된 값을 함께 지우기",
+                    "Stale paths from a previous session keep reappearing",
+                    "Use the <b>Clear Inputs</b> button on the Inputs tab to clear both the fields and the "
+                    "persisted values",
                 ],
                 [
-                    "결과가 예상 밖 폴더(예: 알 수 없는 임시 폴더 하위)에 생성됨",
-                    "과거 버전의 버그였음 (processed_dir 경로 계산 오류) — 현재 버전에서 수정 완료, output directory를 기준으로 정확히 계산됨",
+                    "Results are written to an unexpected folder (e.g. under some unknown temp directory)",
+                    "This was a bug in an earlier version (processed_dir path computation) \u2014 fixed in the "
+                    "current version; the path is now always computed correctly relative to the output directory",
                 ],
                 [
-                    "Run Analysis 눌러도 진행이 안 됨",
-                    'QGIS 메뉴 "View → Panels → Log Messages"의 "Solafune Change Analyzer" 탭에서 상세 로그 확인',
+                    "Run Analysis doesn't seem to progress",
+                    "Check the \u201cSolafune Change Analyzer\u201d tab under QGIS's \u201cView \u2192 Panels "
+                    "\u2192 Log Messages\u201d panel for detailed logs",
                 ],
                 [
-                    "결과 레이어가 안 뜸",
-                    'Outputs 탭의 "Load results into current QGIS project" 체크 여부 확인',
+                    "Result layers don't appear",
+                    "Check whether \u201cLoad results into current QGIS project\u201d is enabled on the Outputs tab",
                 ],
                 [
-                    "External 모드 실행이 안 끝남",
-                    "인터프리터 경로가 실제 python.exe인지 확인(.bat/바로가기 아님), 그 환경에 pip install -e . 되어 있는지 확인",
+                    "External-mode run never finishes",
+                    "Confirm the interpreter path points at an actual python.exe (not a .bat file or shortcut), "
+                    "and that pip install -e . has been run in that environment",
                 ],
             ],
             s,
@@ -810,11 +860,11 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("A.11 체크섬 검증 (선택)", s["h2"]))
+    story.append(Paragraph("A.11 Checksum Verification (Optional)", s["h2"]))
     story.append(
         Paragraph(
-            "Windows PowerShell/명령 프롬프트에서 실행 후 출력된 해시값을 "
-            "<font face='Courier'>solafune_change_analyzer.zip.sha256</font> 파일 내용과 비교합니다.",
+            "Run this in PowerShell or Command Prompt and compare the printed hash against the contents of "
+            "<font face='Courier'>solafune_change_analyzer.zip.sha256</font>.",
             s["body"],
         )
     )
@@ -822,23 +872,23 @@ def build_story(styles: dict) -> list:
     story.append(PageBreak())
 
     # ================================================================== PART B
-    story.append(Paragraph("PART B. 스크립트(CLI) 버전", s["h1"]))
+    story.append(Paragraph("PART B. Script (CLI) Edition", s["h1"]))
 
-    story.append(Paragraph("B.1 사전 준비", s["h2"]))
+    story.append(Paragraph("B.1 Prerequisites", s["h2"]))
     story.append(
         bullet_list(
             [
-                "Python 3.10 이상 (개발/테스트는 3.12)",
-                "설치 파일: <font face='Courier'>solafune-sentinel2-change-source.zip</font>",
+                "Python 3.10 or later (developed/tested on 3.12)",
+                "Install package: <font face='Courier'>solafune-sentinel2-change-source.zip</font>",
             ],
             s,
         )
     )
 
-    story.append(Paragraph("B.2 설치 단계", s["h2"]))
+    story.append(Paragraph("B.2 Installation Steps", s["h2"]))
     story.append(
         Paragraph(
-            "1) 압축 해제 (GitHub Download ZIP과 동일 구조라 폴더명이 -master로 끝남)", s["body"]
+            "1) Unzip (folder name ends in -master, matching GitHub's Download ZIP layout)", s["body"]
         )
     )
     story.append(
@@ -847,9 +897,9 @@ def build_story(styles: dict) -> list:
             s,
         )
     )
-    story.append(Paragraph("2) 가상환경 생성", s["body"]))
+    story.append(Paragraph("2) Create a virtual environment", s["body"]))
     story.append(code_block("python -m venv .venv", s))
-    story.append(Paragraph("3) 의존성 설치", s["body"]))
+    story.append(Paragraph("3) Install dependencies", s["body"]))
     story.append(
         code_block(
             ".venv\\Scripts\\pip install --upgrade pip\n"
@@ -860,33 +910,34 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         Paragraph(
-            "macOS/Linux는 <font face='Courier'>.venv\\Scripts\\pip</font> 대신 "
-            "<font face='Courier'>source .venv/bin/activate</font> 후 <font face='Courier'>pip ...</font>.",
+            "On macOS/Linux, replace <font face='Courier'>.venv\\Scripts\\pip</font> with "
+            "<font face='Courier'>source .venv/bin/activate</font> followed by "
+            "<font face='Courier'>pip ...</font>.",
             s["body"],
         )
     )
 
-    story.append(Paragraph("B.3 한 줄 실행 (권장)", s["h2"]))
+    story.append(Paragraph("B.3 One-Line Run (Recommended)", s["h2"]))
     story.append(code_block("solafune-change all --config config/default.yaml", s))
     story.append(
         Paragraph(
-            "약 30초 안에 전체 파이프라인이 끝나고 결과는 <font face='Courier'>outputs/</font>와 "
-            "<font face='Courier'>data/processed/</font>에 생성됩니다.",
+            "The full pipeline finishes in roughly 30 seconds; results land in "
+            "<font face='Courier'>outputs/</font> and <font face='Courier'>data/processed/</font>.",
             s["body"],
         )
     )
 
-    story.append(Paragraph("B.4 개별 CLI 명령어", s["h2"]))
+    story.append(Paragraph("B.4 Individual CLI Commands", s["h2"]))
     story.append(
         make_table(
-            ["명령어", "설명"],
+            ["Command", "Description"],
             [
-                ["solafune-change validate --config &lt;yaml&gt;", "입력만 검증 (dry-run)"],
-                ["solafune-change run --config &lt;yaml&gt;", "전체 파이프라인 실행"],
-                ["solafune-change stats --config &lt;yaml&gt;", "공간통계 강제 활성화"],
-                ["solafune-change report --config &lt;yaml&gt;", "실행 후 report.md 재생성"],
-                ["solafune-change all --config &lt;yaml&gt;", "validate → run (권장)"],
-                ["python -m solafune_change --help", "위와 동일 (모듈 실행)"],
+                ["solafune-change validate --config &lt;yaml&gt;", "Validates inputs only (dry run)"],
+                ["solafune-change run --config &lt;yaml&gt;", "Runs the full pipeline"],
+                ["solafune-change stats --config &lt;yaml&gt;", "Forces spatial statistics on"],
+                ["solafune-change report --config &lt;yaml&gt;", "Regenerates report.md from a prior run"],
+                ["solafune-change all --config &lt;yaml&gt;", "validate then run (recommended)"],
+                ["python -m solafune_change --help", "Same as above, invoked as a module"],
             ],
             s,
             col_widths=[260, 210],
@@ -894,30 +945,30 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("B.5 옵션 오버라이드 전체", s["h2"]))
+    story.append(Paragraph("B.5 Full Option Reference", s["h2"]))
     story.append(
         make_table(
-            ["옵션", "설명"],
+            ["Option", "Description"],
             [
-                ["--before / --after / --aoi / --output-dir", "경로 오버라이드"],
-                ["--method baseline|cva|both", "분석 방법 (기본 both)"],
-                ["--threshold-method otsu|percentile|manual", "임계값 방식"],
-                ["--percentile N", "percentile 방식 백분위수"],
-                ["--threshold-value N", "manual 방식 절대값"],
-                ["--min-area-m2 N", "최소 변화 객체 면적"],
-                ["--grid-size-m N", "공간통계 격자 크기"],
-                ["--permutations N", "permutation 횟수"],
-                ["--seed N", "random seed"],
-                ["--ml / --no-ml", "실험적 ML on/off"],
-                ["--json-progress", "JSON Lines 진행률 (플러그인 외부 실행용)"],
-                ["-v / --verbose", "디버그 로그"],
+                ["--before / --after / --aoi / --output-dir", "Path overrides"],
+                ["--method baseline|cva|both", "Analysis method (default both)"],
+                ["--threshold-method otsu|percentile|manual", "Threshold method"],
+                ["--percentile N", "Percentile for the percentile method"],
+                ["--threshold-value N", "Absolute value for the manual method"],
+                ["--min-area-m2 N", "Minimum change-feature area"],
+                ["--grid-size-m N", "Spatial-statistics grid size"],
+                ["--permutations N", "Number of permutations"],
+                ["--seed N", "Random seed"],
+                ["--ml / --no-ml", "Toggle experimental ML on/off"],
+                ["--json-progress", "JSON Lines progress output (used for external/plugin execution)"],
+                ["-v / --verbose", "Debug-level logging"],
             ],
             s,
             col_widths=[190, 280],
             mono_cols={0},
         )
     )
-    story.append(Paragraph("실행 예시", s["h3"]))
+    story.append(Paragraph("Example", s["h3"]))
     story.append(
         code_block(
             "solafune-change run --config config/default.yaml \\\n"
@@ -927,27 +978,27 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("B.6 출력 결과 위치", s["h2"]))
+    story.append(Paragraph("B.6 Output File Locations", s["h2"]))
     story.append(
         make_table(
-            ["경로", "내용"],
+            ["Path", "Contents"],
             [
-                ["data/processed/sentinel2_&lt;date&gt;_stack.tif", "RGB 순서 밴드 스택"],
+                ["data/processed/sentinel2_&lt;date&gt;_stack.tif", "RGB-ordered band stack"],
                 [
                     "data/processed/{baseline,cva}_change_{intensity,binary}.tif",
-                    "변화탐지 래스터 4종",
+                    "Four change-detection rasters",
                 ],
-                ["outputs/database/change_analysis.gpkg", "GeoPackage (SQLite 기반 공간 DB)"],
-                ["outputs/figures/change_comparison.png", "baseline vs CVA vs Gi* 비교 그림"],
-                ["outputs/maps/interactive_map.html", "인터랙티브 지도 (오프라인 동작)"],
-                ["outputs/statistics/global_moran.json, spatial_statistics.csv", "공간통계 수치"],
+                ["outputs/database/change_analysis.gpkg", "GeoPackage (SQLite-based spatial database)"],
+                ["outputs/figures/change_comparison.png", "Baseline vs. CVA vs. Gi* comparison figure"],
+                ["outputs/maps/interactive_map.html", "Interactive map (fully offline)"],
+                ["outputs/statistics/global_moran.json, spatial_statistics.csv", "Spatial-statistics values"],
                 [
                     "outputs/qgis/styles/*.qml, solafune_change_analyzer.zip",
-                    "QGIS 스타일, 플러그인 zip",
+                    "QGIS styles, plugin zip",
                 ],
                 [
                     "outputs/{summary,run_manifest,quality_report}.json, report.md",
-                    "요약·메타데이터·리포트",
+                    "Summary, metadata, and report",
                 ],
             ],
             s,
@@ -956,7 +1007,7 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("B.7 QGIS 플러그인 ZIP 재빌드", s["h2"]))
+    story.append(Paragraph("B.7 Rebuilding the QGIS Plugin ZIP", s["h2"]))
     story.append(
         code_block(
             "python scripts/build_qgis_plugin.py\n"
@@ -965,10 +1016,11 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("B.8 이 사용설명서 PDF 재생성", s["h2"]))
+    story.append(Paragraph("B.8 Regenerating This PDF", s["h2"]))
     story.append(
         Paragraph(
-            "이 PDF 자체도 스크립트로 생성됩니다 (Malgun Gothic 폰트를 임베딩하는 reportlab 스크립트).",
+            "This PDF is itself generated by a script (a reportlab script that embeds the Malgun Gothic font, "
+            "which also renders Latin text cleanly).",
             s["body"],
         )
     )
@@ -976,7 +1028,7 @@ def build_story(styles: dict) -> list:
         code_block("python scripts/generate_submission_pdf.py --out submission/Usage_Guide.pdf", s)
     )
 
-    story.append(Paragraph("B.9 테스트 / 코드 품질", s["h2"]))
+    story.append(Paragraph("B.9 Tests / Code Quality", s["h2"]))
     story.append(
         code_block(
             "python -m pytest tests/ -v\n"
@@ -986,36 +1038,36 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("B.10 config/default.yaml 전체 필드 레퍼런스", s["h2"]))
+    story.append(Paragraph("B.10 Full config/default.yaml Field Reference", s["h2"]))
     story.append(
         make_table(
-            ["섹션.필드", "기본값", "설명"],
+            ["Section.field", "Default", "Description"],
             [
-                ["paths.aoi/before_folder/after_folder", "-", "필수 입력 경로"],
-                ["paths.output_dir", "outputs", "결과 출력 폴더"],
+                ["paths.aoi/before_folder/after_folder", "-", "Required input paths"],
+                ["paths.output_dir", "outputs", "Output directory"],
                 [
                     "paths.processed_dir",
-                    "(미지정 시 output_dir 기준 자동 계산)",
-                    "중간 GeoTIFF 저장 폴더",
+                    "(auto-computed from output_dir if unset)",
+                    "Intermediate GeoTIFF folder",
                 ],
                 [
                     "preprocessing.normalization",
                     "robust_median_mad",
-                    "none/robust_median_mad/percentile_matching/pif_linear",
+                    "none / robust_median_mad / percentile_matching / pif_linear",
                 ],
-                ["preprocessing.reflectance_scale", "10000.0", "DN → 반사도 환산 계수"],
-                ["change_detection.method", "both", "baseline/cva/both"],
-                ["change_detection.threshold_method", "otsu", "otsu/percentile/manual"],
-                ["change_detection.min_area_m2", "400.0", "최소 변화면적"],
-                ["change_detection.morphology.*", "opening_then_closing, 3px", "형태학적 후처리"],
-                ["spatial_statistics.enabled", "true", "공간통계 on/off"],
-                ["spatial_statistics.grid_size_m", "150.0", "분석 격자 크기"],
-                ["spatial_statistics.weights", "queen", "queen/rook/knn"],
-                ["spatial_statistics.permutations", "999", "permutation 횟수"],
-                ["spatial_statistics.fdr_correction", "true", "BH-FDR 보정 on/off"],
-                ["spatial_ml.enabled", "false", "실험적 ML on/off (opt-in)"],
-                ["spatial_ml.model", "isolation_forest", "isolation_forest/dbscan"],
-                ["run.random_seed", "42", "전체 재현성 시드"],
+                ["preprocessing.reflectance_scale", "10000.0", "DN-to-reflectance scale factor"],
+                ["change_detection.method", "both", "baseline / cva / both"],
+                ["change_detection.threshold_method", "otsu", "otsu / percentile / manual"],
+                ["change_detection.min_area_m2", "400.0", "Minimum change-feature area"],
+                ["change_detection.morphology.*", "opening_then_closing, 3px", "Morphological post-processing"],
+                ["spatial_statistics.enabled", "true", "Toggle spatial statistics"],
+                ["spatial_statistics.grid_size_m", "150.0", "Analysis grid size"],
+                ["spatial_statistics.weights", "queen", "queen / rook / knn"],
+                ["spatial_statistics.permutations", "999", "Number of permutations"],
+                ["spatial_statistics.fdr_correction", "true", "Toggle BH-FDR correction"],
+                ["spatial_ml.enabled", "false", "Toggle experimental ML (opt-in)"],
+                ["spatial_ml.model", "isolation_forest", "isolation_forest / dbscan"],
+                ["run.random_seed", "42", "Global reproducibility seed"],
             ],
             s,
             col_widths=[150, 145, 155],
@@ -1023,23 +1075,23 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("B.11 문제 해결 (Troubleshooting)", s["h2"]))
+    story.append(Paragraph("B.11 Troubleshooting", s["h2"]))
     story.append(
         make_table(
-            ["증상", "원인 / 해결"],
+            ["Symptom", "Cause / fix"],
             [
                 [
-                    '"command not found: solafune-change"',
-                    "가상환경 활성화 안 됨 또는 pip install -e . 안 함",
+                    "\u201ccommand not found: solafune-change\u201d",
+                    "Virtual environment not activated, or pip install -e . was not run",
                 ],
                 [
-                    "입력 파일 CRS/밴드 오류",
-                    "solafune-change validate --config ... 로 먼저 원인 확인",
+                    "CRS/band errors on the input files",
+                    "Diagnose first with solafune-change validate --config ...",
                 ],
-                ["실행이 느리거나 멈춤", "grid-size-m을 키우거나 permutations를 줄여서 재시도"],
+                ["Run is slow or hangs", "Retry with a larger grid-size-m or fewer permutations"],
                 [
-                    "결과 수치가 report.md와 다름",
-                    "동일 seed·config로 재실행했는지 확인 (재현성 보장됨)",
+                    "Result numbers differ from report.md",
+                    "Confirm you re-ran with the same seed and config (reproducibility is guaranteed when they match)",
                 ],
             ],
             s,
@@ -1048,30 +1100,30 @@ def build_story(styles: dict) -> list:
     )
     story.append(PageBreak())
 
-    # ================================================================== 2. 실제 분석 결과
-    story.append(Paragraph("2. 실제 분석 결과 (config/default.yaml, seed=42)", s["h1"]))
+    # ================================================================== 2. Actual results
+    story.append(Paragraph("2. Actual Analysis Results (config/default.yaml, seed=42)", s["h1"]))
     story.append(
         make_table(
-            ["지표", "값"],
+            ["Metric", "Value"],
             [
-                ["변화 객체 수", "514개"],
-                ["총 변화면적", "37,405,887 m² (AOI의 14.14%)"],
-                ["주 분석법 / threshold", "Robust CVA / Otsu (값 = 5.2199)"],
+                ["Change feature count", "514"],
+                ["Total changed area", "37,405,887 m\u00b2 (14.14% of AOI)"],
+                ["Primary method / threshold", "Robust CVA / Otsu (value = 5.2199)"],
                 [
-                    "baseline 대비",
-                    "baseline은 픽셀의 47.85% 변화 판정 (CVA 15.32%보다 훨씬 노이즈 많음)",
+                    "Vs. baseline",
+                    "baseline flags 47.85% of pixels as changed (far noisier than CVA's 15.32%)",
                 ],
                 [
                     "Global Moran's I",
-                    "0.8335 (E[I]=-0.0001, z=178.37, permutation p=0.001, 999회, seed=42)",
+                    "0.8335 (E[I]=-0.0001, z=178.37, permutation p=0.001, 999 permutations, seed=42)",
                 ],
-                ["95%+ Gi* hotspot과 겹치는 객체", "95개"],
-                ["가장 큰 변화 객체", "15,987,700 m²"],
+                ["Features overlapping a 95%+ Gi* hotspot", "95"],
+                ["Largest change feature", "15,987,700 m\u00b2"],
                 [
-                    "실험적 ML (Isolation Forest, opt-in)",
-                    "Top-K 이상치 안정성(공간 블록 부트스트랩) = 0.72",
+                    "Experimental ML (Isolation Forest, opt-in)",
+                    "Top-K outlier stability (spatial block bootstrap) = 0.72",
                 ],
-                ["실행 시간", "약 30초 (전체 파이프라인, CLI 기준)"],
+                ["Run time", "~30 seconds (full pipeline, CLI)"],
             ],
             s,
             col_widths=[190, 265],
@@ -1079,163 +1131,180 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         Paragraph(
-            "해석: 변화가 통계적으로 강하게 공간 군집되어 있음(Moran's I=0.834, p=0.001)은 실제 구조화된 "
-            "지표 변화와 일치합니다. 다만 RGB 두 시점만으로는 굴착 확장/폐석 적치/도로 변화/수분 변화/식생 "
-            '제거 중 무엇인지 확정할 수 없어, report.md에서는 "consistent with" 표현만 사용합니다.',
+            "Interpretation: the strong, statistically significant spatial clustering of change "
+            "(Moran's I = 0.834, p = 0.001) is consistent with genuine, structured surface change rather than "
+            "noise. However, two RGB-only dates cannot by themselves confirm whether the change is pit "
+            "expansion, waste-rock placement, road changes, moisture change, or vegetation removal \u2014 so "
+            "report.md deliberately uses \u201cconsistent with\u201d phrasing and stops short of any definitive "
+            "land-use classification.",
             s["body"],
         )
     )
 
-    # ================================================================== 3. 알고리즘
-    story.append(Paragraph("3. 알고리즘 선택과 근거", s["h1"]))
-    story.append(Paragraph("Baseline (제공 예제 재구현)", s["h3"]))
+    # ================================================================== 3. Algorithm rationale
+    story.append(Paragraph("3. Algorithm Choices and Rationale", s["h1"]))
+    story.append(Paragraph("Baseline (reimplementation of the provided example)", s["h3"]))
     story.append(
         Paragraph(
-            "픽셀별 다중 밴드 유클리드 거리를 계산하고 min-max 정규화합니다. 정규화 없이(방사보정 없이) "
-            "전역 스케일링을 쓰기 때문에 극단값 픽셀 하나가 전체 강도 스케일을 왜곡하는 약점을 그대로 "
-            "가지고 있습니다 — 예제의 핵심 아이디어를 의도적으로 그대로 살려서 재구현했습니다 (복사는 "
-            "아니고 타입힌트/로깅/예외처리를 갖춘 독립 구현).",
+            "Computes per-pixel multi-band Euclidean distance and min-max normalizes it. Because it applies no "
+            "radiometric correction and uses global min-max scaling, a single extreme-value pixel can distort "
+            "the entire intensity scale \u2014 this weakness was deliberately preserved by reimplementing the "
+            "example's core idea faithfully (not copied; an independent implementation with type hints, "
+            "logging, and error handling).",
             s["body"],
         )
     )
-    story.append(Paragraph("Robust RGB CVA (주 분석법)", s["h3"]))
+    story.append(Paragraph("Robust RGB CVA (primary method)", s["h3"]))
     story.append(
         Paragraph(
-            "밴드별 차이를 median/MAD로 표준화한 뒤 결합합니다: "
+            "Per-band differences are standardized by median/MAD before being combined: "
             "<font face='Courier'>z_b = (diff_b - median(diff_b)) / (1.4826 * MAD(diff_b))</font>, "
-            "<font face='Courier'>CVA = sqrt(z_B04^2 + z_B03^2 + z_B02^2)</font>. MAD가 0에 가까우면 "
-            "표준편차로 안전하게 대체합니다. 실측으로 baseline(47.85%)보다 훨씬 적은 15.32%만 변화로 "
-            "판정해, 노이즈에 덜 민감함을 확인했습니다.",
+            "<font face='Courier'>CVA = sqrt(z_B04^2 + z_B03^2 + z_B02^2)</font>. If MAD is close to zero, the "
+            "standard deviation is used as a safe fallback. In practice, CVA flags only 15.32% of pixels as "
+            "changed versus baseline's 47.85%, confirming it is markedly less sensitive to noise.",
             s["body"],
         )
     )
-    story.append(Paragraph("공간통계", s["h3"]))
+    story.append(Paragraph("Spatial statistics", s["h3"]))
     story.append(
         Paragraph(
-            "픽셀 단위로 dense spatial weight matrix를 만들지 않고 150m 격자로 집계(11,967개 셀) 후 "
-            "Queen contiguity로 Global/Local Moran's I를, binary weights로 Getis-Ord Gi*를 계산합니다. "
-            "Gi* p-value에는 Benjamini-Hochberg FDR 보정을 적용합니다.",
+            "Rather than building a dense pixel-level spatial weight matrix, values are first aggregated to a "
+            "150 m grid (11,967 cells), then Global/Local Moran's I is computed with Queen contiguity weights "
+            "and Getis-Ord Gi* with binary weights. Gi* p-values are corrected with the Benjamini-Hochberg FDR "
+            "procedure.",
             s["body"],
         )
     )
-    story.append(Paragraph("실험적 비지도 공간 ML", s["h3"]))
+    story.append(Paragraph("Experimental unsupervised spatial ML", s["h3"]))
     story.append(
         Paragraph(
-            "정답 레이블이 없으므로 accuracy/precision/recall을 절대 주장하지 않습니다. 대신 공간 블록 "
-            '부트스트랩으로 "상위 이상치 순위가 재샘플링에도 안정적인가"를 진단합니다. 기본값은 '
-            '비활성화(opt-in)이며 UI/문서 어디서나 "탐색적 결과"임을 명시합니다.',
+            "With no ground truth available, accuracy/precision/recall are never claimed. Instead, a spatial "
+            "block bootstrap is used to diagnose whether the top-ranked outliers stay stable under "
+            "resampling. It is disabled by default (opt-in), and every surface \u2014 UI and documentation "
+            "alike \u2014 explicitly labels it as \u201cexploratory.\u201d",
             s["body"],
         )
     )
-    story.append(Paragraph("GeoPackage를 데이터베이스로 선택한 이유", s["h3"]))
+    story.append(Paragraph("Why GeoPackage as the database", s["h3"]))
     story.append(
         Paragraph(
-            "과제가 요구한 SQLite 옵션을 GeoPackage(OGC 표준, SQLite 파일 그 자체)로 만족시킵니다 — "
-            "서버 없이 열어볼 수 있고 WKT 텍스트가 아닌 진짜 geometry 컬럼과 공간 인덱스를 제공합니다.",
+            "The assignment's SQLite requirement is satisfied by GeoPackage, an OGC standard that is itself a "
+            "SQLite file \u2014 openable with no server, and backed by a real geometry column and spatial index "
+            "rather than WKT text.",
             s["body"],
         )
     )
     story.append(PageBreak())
 
-    # ================================================================== 4. DB 스키마
-    story.append(Paragraph("4. 공간 데이터베이스 스키마 전체", s["h1"]))
-    story.append(Paragraph("change_features (514개 행, MULTIPOLYGON, EPSG:32735)", s["h3"]))
+    # ================================================================== 4. DB schema
+    story.append(Paragraph("4. Full Spatial Database Schema", s["h1"]))
+    story.append(Paragraph("change_features (514 rows, MULTIPOLYGON, EPSG:32735)", s["h3"]))
     story.append(
         make_table(
-            ["필드", "설명"],
+            ["Field", "Description"],
             [
-                ["id", "객체 ID"],
-                ["date_before / date_after", "비교 시점 (20230812 / 20230902)"],
-                ["method / threshold_method / threshold_value", "사용된 분석법과 임계값"],
-                ["area_m2 / perimeter_m / compactness", "면적/둘레/Polsby-Popper 컴팩트니스"],
-                ["mean_change / max_change / p95_change", "객체 내부 변화강도 통계"],
+                ["id", "Feature ID"],
+                ["date_before / date_after", "Compared acquisition dates (20230812 / 20230902)"],
+                ["method / threshold_method / threshold_value", "Method and threshold used"],
+                ["area_m2 / perimeter_m / compactness", "Area / perimeter / Polsby-Popper compactness"],
+                ["mean_change / max_change / p95_change", "Change-intensity statistics within the feature"],
                 [
                     "confidence",
-                    "0-1 휴리스틱 점수 (보정된 확률 아님) — threshold 초과 정도+일관성+크기+hotspot 유의성+ML 순위 가중합",
+                    "A 0-1 heuristic score (not a calibrated probability) \u2014 weighted combination of "
+                    "threshold-exceedance magnitude, consistency, size, hotspot significance, and ML rank",
                 ],
                 [
                     "gi_zscore / gi_pvalue / gi_qvalue / hotspot_class",
-                    "Getis-Ord Gi* 결과 (q는 FDR 보정값)",
+                    "Getis-Ord Gi* results (q is the FDR-corrected value)",
                 ],
-                ["lisa_cluster", "Local Moran's I 군집 유형 (High-High 등)"],
-                ["ml_anomaly_score / ml_cluster_id", "(ML 활성화 시) 이상치 점수/군집 ID"],
-                ["geom", "실제 geometry 컬럼 (MULTIPOLYGON)"],
+                ["lisa_cluster", "Local Moran's I cluster type (e.g. High-High)"],
+                ["ml_anomaly_score / ml_cluster_id", "(If ML enabled) outlier score / cluster ID"],
+                ["geom", "The actual geometry column (MULTIPOLYGON)"],
             ],
             s,
             col_widths=[140, 320],
             mono_cols={0},
         )
     )
-    story.append(Paragraph("spatial_grid (11,967개 셀, POLYGON)", s["h3"]))
+    story.append(Paragraph("spatial_grid (11,967 cells, POLYGON)", s["h3"]))
     story.append(
         Paragraph(
-            "각 셀의 mean/median/p90/p95 CVA, changed_proportion, 밴드별 평균 차이, local_std_cva, "
-            "그리고 change_features와 동일한 Gi*/LISA/ML 필드를 포함합니다.",
+            "Per-cell mean/median/p90/p95 CVA, changed_proportion, mean per-band difference, local_std_cva, "
+            "plus the same Gi*/LISA/ML fields found on change_features.",
             s["body"],
         )
     )
-    story.append(Paragraph("run_metadata (1행/실행)", s["h3"]))
+    story.append(Paragraph("run_metadata (1 row per run)", s["h3"]))
     story.append(
         Paragraph(
-            "run_id, 실행 시각, 입력 경로, CRS/해상도, 방법/정규화/threshold 파라미터, "
-            "spatial_statistics/spatial_ml 활성화 여부, package_version, random_seed 등 재현에 필요한 모든 정보.",
+            "run_id, timestamp, input paths, CRS/resolution, method/normalization/threshold parameters, "
+            "spatial_statistics/spatial_ml enabled flags, package_version, random_seed \u2014 everything needed "
+            "to reproduce the run.",
             s["body"],
         )
     )
     story.append(Paragraph("quality_checks", s["h3"]))
-    story.append(Paragraph("검증 단계에서 발생한 경고/오류 기록 (이번 실행에서는 0건).", s["body"]))
+    story.append(Paragraph("Warnings/errors raised during validation (zero for this run).", s["body"]))
     story.append(PageBreak())
 
-    # ================================================================== 5. 버그
-    story.append(Paragraph("5. 개발 중 실제로 발견하고 수정한 버그", s["h1"]))
+    # ================================================================== 5. Bugs
+    story.append(Paragraph("5. Bugs Actually Found and Fixed During Development", s["h1"]))
     story.append(
         Paragraph(
-            "코드 리뷰나 추측이 아니라 실행/테스트/실사용 중 실제로 재현된 문제들입니다.", s["body"]
+            "These are problems actually reproduced through running, testing, or real usage \u2014 not "
+            "hypothetical issues found by code review alone.",
+            s["body"],
         )
     )
     story.append(
         make_table(
-            ["버그", "발견 경위", "수정"],
+            ["Bug", "How it was found", "Fix"],
             [
                 [
-                    'QGIS "Validate Inputs" 크래시',
-                    "실제 QGIS에 설치 후 클릭 → rasterio 없어 ModuleNotFoundError 전파",
-                    "의존성 사전 확인 후 External interpreter로 자동 폴백 또는 안내창",
+                    "QGIS \u201cValidate Inputs\u201d crash",
+                    "Clicked after installing on a real QGIS instance \u2192 rasterio missing, "
+                    "ModuleNotFoundError propagated uncaught",
+                    "Check dependencies up front and fall back to the External interpreter automatically, or "
+                    "show a friendly dialog otherwise",
                 ],
                 [
-                    "processed_dir 경로 계산 오류",
-                    "실사용 중 결과가 알 수 없는 임시 폴더 하위에 생성됨 → 원인 추적",
-                    "output_dir 기준으로 항상 절대경로 계산하도록 수정, 회귀 테스트 2개 추가",
+                    "processed_dir path miscomputed",
+                    "Reported that results were being written under an unrelated temp folder during real "
+                    "usage \u2192 traced the root cause",
+                    "Now always computed as an absolute path relative to output_dir; two regression tests added",
                 ],
                 [
-                    "write_intermediate 설정 무시됨",
-                    "코드 전수 재검토 중 발견",
-                    "실제로 중간 GeoTIFF 저장 여부를 제어하도록 수정",
+                    "write_intermediate setting silently ignored",
+                    "Found during a full code review",
+                    "Now actually controls whether intermediate GeoTIFFs are saved",
                 ],
                 [
-                    "run_label 값이 버려짐",
-                    "동일 재검토",
-                    "run_id에 반영, 레이어 그룹명/run_metadata에 표시",
+                    "run_label value was discarded",
+                    "Found in the same review",
+                    "Now sanitized into run_id and shown in the layer group name / run_metadata",
                 ],
                 [
-                    "matplotlib TclError 간헐적 발생",
-                    "테스트가 가끔 무작위 실패 → 추적 후 원인 특정",
-                    "비대화형 Agg 백엔드 강제 지정",
+                    "Intermittent matplotlib TclError",
+                    "Test suite occasionally failed at random \u2014 initially misdiagnosed as a PROJ issue, "
+                    "traced via the actual traceback",
+                    "Forced the non-interactive Agg backend before importing pyplot (no recurrence over 5 "
+                    "consecutive runs)",
                 ],
                 [
-                    "폴리곤화 결과 0개일 때 크래시",
-                    "극단 케이스 테스트 중 발견",
-                    "빈 GeoDataFrame 스키마 명시",
+                    "Crash when polygonization yields zero features",
+                    "Found while testing the extreme case where min_area filters out every feature",
+                    "Empty GeoDataFrame now created with an explicit schema",
                 ],
                 [
-                    "PDF 코드블록 한글 깨짐",
-                    "본 문서 초안 검토 중 발견",
-                    "코드블록은 ASCII만, 한글은 별도 문단/표",
+                    "Garbled Korean text in PDF code blocks",
+                    "Found while reviewing an earlier draft of this document",
+                    "Courier-styled code blocks are ASCII-only; localized text was moved to separate "
+                    "paragraphs/tables",
                 ],
                 [
-                    "실행 CRS 조회 실패 가능성",
-                    "개발 환경 PROJ 충돌 재현 중 발견",
-                    "PROJ 조회 실패 방어 코드 추가",
+                    "Possible unguarded CRS lookup failure at runtime",
+                    "Found while reproducing a PROJ conflict in the development environment",
+                    "Added defensive handling so a PROJ lookup failure can't propagate uncaught",
                 ],
             ],
             s,
@@ -1243,47 +1312,53 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    # ================================================================== 6. 테스트
-    story.append(Paragraph("6. 테스트 및 검증 기록", s["h1"]))
+    # ================================================================== 6. Tests
+    story.append(Paragraph("6. Test and Verification Record", s["h1"]))
     story.append(
         bullet_list(
             [
-                "<b>pytest 65개 전부 통과</b> — 합성 데이터 단위 테스트 + 실제 데이터 통합 테스트 + processed_dir 회귀 테스트 2개",
-                "<b>ruff check ., black --check</b> 클린",
-                "<b>실제 QGIS 3.44.12 검증</b>: 생명주기, 재로드 시 중복 없음, Processing provider, Dependencies 탭 실측, "
-                "on_validate 크래시 재현·수정, Clear Inputs 버튼 동작, embedded-without-venv 방식 전체 파이프라인 성공",
-                "<b>실제 데이터 파이프라인 실행</b>: GeoTIFF/GeoPackage 재오픈 검증, docs/example_queries.sql 9개 쿼리 실행 확인",
-                "<b>재현성</b>: 동일 seed 두 번 실행 시 수치 완전 동일 확인",
+                "<b>All 65 pytest cases pass</b> \u2014 synthetic-data unit tests + real-data integration tests "
+                "+ 2 processed_dir regression tests",
+                "<b>ruff check ., black --check</b> clean",
+                "<b>Verified against a real QGIS 3.44.12 install</b>: plugin lifecycle, no duplicate "
+                "registration on reload, Processing provider registration/teardown, Dependencies tab checked "
+                "live, the on_validate crash reproduced and re-verified as fixed, Clear Inputs button behavior, "
+                "and a full pipeline run succeeding via the no-venv (embedded) install path",
+                "<b>Real-data pipeline run</b>: GeoTIFF/GeoPackage re-opened and checked after the run, all 9 "
+                "queries in docs/example_queries.sql executed successfully against the real database",
+                "<b>Reproducibility</b>: running twice with the same seed produces numerically identical results",
             ],
             s,
         )
     )
 
-    # ================================================================== 7. 한계
-    story.append(Paragraph("7. 주요 가정 및 한계", s["h1"]))
+    # ================================================================== 7. Limitations
+    story.append(Paragraph("7. Key Assumptions and Limitations", s["h1"]))
     story.append(
         bullet_list(
             [
-                "Sentinel-2 반사도 scale factor = 10000 가정 (메타데이터 미제공, ESA 표준 관행 적용)",
-                "밴드 스택 순서는 R-G-B(B04,B03,B02)",
-                "B08(NIR) 없어 NDVI 계산 불가",
-                "구름/그림자 마스크(SCL) 없음",
-                "시점 2개뿐이라 계절성/영구적 변화 분리 불가",
-                "정답 레이블 없음 — accuracy/precision/recall 어디서도 주장하지 않음",
-                "confidence는 보정된 확률이 아닌 휴리스틱 점수",
-                "Gi*/Moran's I 유의성은 공간 패턴만 설명, 원인(채굴 행위 등) 확정 아님",
+                "Assumes a Sentinel-2 reflectance scale factor of 10000 (no metadata was provided; standard "
+                "ESA convention applied)",
+                "Band stack order is R-G-B (B04, B03, B02)",
+                "No B08 (NIR) band, so NDVI cannot be computed",
+                "No cloud/shadow mask (SCL) \u2014 cloud contamination cannot be ruled out",
+                "Only two acquisition dates, so seasonal effects cannot be separated from permanent change",
+                "No ground truth \u2014 accuracy/precision/recall are never claimed anywhere",
+                "confidence is an explicit heuristic score, not a calibrated probability",
+                "Gi*/Moran's I significance describes spatial pattern only; it does not establish a cause "
+                "(e.g. mining activity)",
             ],
             s,
         )
     )
     story.append(PageBreak())
 
-    # ================================================================== 부록
-    story.append(Paragraph("부록 A. 예시 SQL 쿼리", s["h1"]))
+    # ================================================================== Appendix
+    story.append(Paragraph("Appendix A. Example SQL Queries", s["h1"]))
     story.append(
         Paragraph(
-            "<font face='Courier'>docs/example_queries.sql</font>에 9개 쿼리가 있고, 전부 실제 DB에 실행해 "
-            "검증했습니다. 대표 예시:",
+            "<font face='Courier'>docs/example_queries.sql</font> contains 9 queries, all executed against the "
+            "real database as part of verification. A representative example:",
             s["body"],
         )
     )
@@ -1299,25 +1374,25 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("부록 B. 용어 설명", s["h1"]))
+    story.append(Paragraph("Appendix B. Glossary", s["h1"]))
     story.append(
         make_table(
-            ["용어", "설명"],
+            ["Term", "Description"],
             [
                 [
                     "CVA",
-                    "Change Vector Analysis — 다중 밴드 변화를 하나의 벡터 크기로 결합하는 기법",
+                    "Change Vector Analysis \u2014 combines multi-band change into a single vector magnitude",
                 ],
-                ["MAD", "Median Absolute Deviation — 이상치에 강건한 산포도 지표"],
-                ["Moran's I", "전역 공간 자기상관 지수 (-1~1, 양수=군집, 음수=분산)"],
+                ["MAD", "Median Absolute Deviation \u2014 an outlier-robust measure of dispersion"],
+                ["Moran's I", "Global spatial-autocorrelation index (-1 to 1; positive = clustered, negative = dispersed)"],
                 [
                     "LISA",
-                    "Local Indicators of Spatial Association — Local Moran's I 기반 군집 분류",
+                    "Local Indicators of Spatial Association \u2014 cluster classification based on Local Moran's I",
                 ],
-                ["Getis-Ord Gi*", "국지적 hot/cold spot 통계적 유의성 검정"],
-                ["FDR", "False Discovery Rate — 다중 검정 시 거짓 양성 비율 통제"],
-                ["confidence", "0-1 휴리스틱 점수, 보정된 확률 아님"],
-                ["GeoPackage", "OGC 표준 공간 데이터 포맷, 내부적으로 SQLite 파일"],
+                ["Getis-Ord Gi*", "Statistical significance test for local hot/cold spots"],
+                ["FDR", "False Discovery Rate \u2014 controls the false-positive rate under multiple testing"],
+                ["confidence", "A 0-1 heuristic score, not a calibrated probability"],
+                ["GeoPackage", "An OGC-standard spatial data format, internally a SQLite file"],
             ],
             s,
             col_widths=[100, 335],
@@ -1327,8 +1402,8 @@ def build_story(styles: dict) -> list:
     story.append(hr())
     story.append(
         Paragraph(
-            "함께 제출된 <font face='Courier'>README.md</font>(GitHub 저장소 최상위)와 "
-            "<font face='Courier'>report.md</font>에도 이 내용의 영문판이 있습니다.",
+            "The GitHub repository's top-level <font face='Courier'>README.md</font> and "
+            "<font face='Courier'>report.md</font> also document this project in English.",
             s["caption"],
         )
     )
@@ -1340,10 +1415,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument(
-        "--font", type=str, default=DEFAULT_FONT, help="Korean-capable regular TTF path"
+        "--font", type=str, default=DEFAULT_FONT, help="Regular TTF path (any Unicode-capable font)"
     )
     parser.add_argument(
-        "--font-bold", type=str, default=DEFAULT_FONT_BOLD, help="Korean-capable bold TTF path"
+        "--font-bold", type=str, default=DEFAULT_FONT_BOLD, help="Bold TTF path (any Unicode-capable font)"
     )
     args = parser.parse_args()
 

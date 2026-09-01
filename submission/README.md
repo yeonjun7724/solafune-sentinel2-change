@@ -1,68 +1,70 @@
-# 제출 번들 안내 (Submission Bundle)
+# Submission Bundle Guide
 
-이 폴더 하나에 **QGIS 플러그인 버전**, **스크립트(CLI) 버전**, **원본 데이터**, **실제 실행 결과물**, 그리고 상세 사용 설명서가 함께 들어 있습니다.
+This single folder contains the **QGIS plugin edition**, the **script (CLI) edition**, a copy of the **raw input data**, the **actual output artifacts** from a real run, and a detailed usage guide.
 
-**먼저 볼 것: `Usage_Guide.pdf` (16페이지)** — 아래 요약보다 훨씬 자세합니다. QGIS 플러그인 설치/의존성 설정(별도 venv 없이 하는 법 포함, 실측 검증)/탭별 필드 전체/진행 단계/문제 해결, 스크립트 버전의 전체 CLI·config 레퍼런스, 실제 분석 결과, 알고리즘 근거, DB 스키마, 개발 중 발견한 버그 8건, 테스트 기록, 한계까지 전부 담았습니다.
+**Start here: `Usage_Guide.pdf`** — far more detailed than the summary below. It covers QGIS plugin installation and dependency setup (including how to do it without a separate venv, field-verified), every field on every tab, all pipeline stages, troubleshooting, the full CLI/config reference for the script edition, actual analysis results, algorithm rationale, the database schema, 8 bugs found and fixed during development, the test record, and known limitations.
 
 ```
 submission/
-├── README.md                              ← 이 파일 (요약)
-├── Usage_Guide.pdf                        ← 상세 사용 설명서 (16페이지)
-├── solafune_change_analyzer.zip           ← ① QGIS 플러그인 설치 파일
-├── solafune_change_analyzer.zip.sha256    ← ①의 체크섬
-├── solafune-sentinel2-change-source.zip   ← ② 스크립트(CLI) 버전 = GitHub "Download ZIP"과 동일 구조
-├── data/                                  ← ③ 원본 입력 데이터 (확인용 별도 복사본)
-└── results/                               ← ④ 실제 실행 결과물 원본 (재실행 없이 바로 확인)
-    ├── outputs/                           ← GeoPackage DB, 정적 그림, 인터랙티브 지도, 공간통계, report.md 등
-    └── data_processed/                    ← 스택 GeoTIFF, baseline/CVA intensity·binary 래스터
+├── README.md                              <- this file (summary)
+├── Usage_Guide.pdf                        <- detailed usage guide (English)
+├── solafune_change_analyzer.zip           <- (1) QGIS plugin install package
+├── solafune_change_analyzer.zip.sha256    <- checksum for (1)
+├── solafune-sentinel2-change-source.zip   <- (2) script (CLI) edition = the full source repository as one archive
+├── data/                                  <- (3) raw input data (standalone copy, for inspection)
+└── results/                               <- (4) actual output artifacts from a real run (no re-run needed)
+    ├── outputs/                           <- GeoPackage database, static figure, interactive map, spatial statistics, report.md, etc.
+    └── data_processed/                    <- stacked GeoTIFF, baseline/CVA intensity & binary rasters
 ```
 
-GitHub 원본 저장소(커밋 이력 포함): https://github.com/yeonjun7724/solafune-sentinel2-change
+Original GitHub repository (full commit history): https://github.com/yeonjun7724/solafune-sentinel2-change
 
 ---
 
-## ① `solafune_change_analyzer.zip` — QGIS 플러그인 버전
+## (1) `solafune_change_analyzer.zip` — QGIS plugin edition
 
-QGIS **안에서 GUI로** 클릭해서 사용하는 버전입니다. 이 zip 파일 **하나만** 있으면 됩니다 (분석 엔진 코드가 내부에 vendored되어 있어 다른 파일이 필요 없음).
+Runs **inside QGIS**, driven from a GUI. This single zip file is all you need (the analysis engine is vendored inside it, so no other files are required).
 
-### 설치
-1. QGIS 실행 (3.28 이상, 3.44.12에서 실제 테스트 완료)
-2. 메뉴 **Plugins → Manage and Install Plugins → Install from ZIP**
-3. `solafune_change_analyzer.zip` 선택 → **Install Plugin**
-4. 설치 후 `Installed` 탭에서 "Solafune Change Analyzer" 체크(활성화) 확인
-5. 툴바 아이콘 클릭 또는 **Plugins → Solafune Change Analyzer** 메뉴로 실행
+### Install
+1. Launch QGIS (3.28 or later; field-tested on 3.44.12)
+2. Menu: **Plugins → Manage and Install Plugins → Install from ZIP**
+3. Select `solafune_change_analyzer.zip` → **Install Plugin**
+4. In the **Installed** tab, confirm "Solafune Change Analyzer" is checked (enabled)
+5. Launch it from the toolbar icon or **Plugins → Solafune Change Analyzer**
 
-### 의존성 설정 — 별도 `.venv` 없이도 가능
-대부분의 Windows/OSGeo4W QGIS는 `rasterio`/`scikit-learn`/`libpysal`/`esda` 등이 기본 내장되어 있지 않습니다. **별도 폴더를 만들지 않고** QGIS 자체 Python에 한 번만 설치하면 됩니다 (실측 검증 완료 — 전체 파이프라인이 임베디드 모드에서 끝까지 성공):
+### Dependency setup — no separate `.venv` required
+Most Windows/OSGeo4W QGIS builds don't ship `rasterio` / `scikit-learn` / `libpysal` / `esda`, etc. by default. **You don't need to create a separate folder** — installing once into QGIS's own Python is enough (field-verified: the full pipeline succeeds end to end in embedded mode):
 ```powershell
 cd "C:\Program Files\QGIS 3.44.12\bin"
 python-qgis-ltr.bat -m pip install --user rasterio geopandas shapely pyproj scipy scikit-image PyYAML libpysal esda scikit-learn matplotlib folium
 ```
-더 격리된 방식(별도 `.venv` + External interpreter)을 원한다면 `Usage_Guide.pdf`의 A.4절을 참고하세요.
+For a more isolated setup (a separate `.venv` + External interpreter), see Section A.4 of `Usage_Guide.pdf`.
 
-### 사용법 (Dock Widget)
-1. **Inputs 탭**: Before/After Sentinel-2 폴더, AOI 파일, 출력 폴더 선택 → **Validate Inputs** 클릭 (경로를 다시 고르고 싶으면 **Clear Inputs(초기화)** 버튼)
-2. **Change Detection 탭**: 분석 방법(baseline/CVA/both), threshold, morphology 등 설정
-3. **Spatial Analysis 탭**: 공간통계(Moran's I / Gi*) 및 실험적 ML 옵션 설정
-4. **Dependencies 탭**: 위 설치가 끝났다면 모든 항목이 "Ready"로 표시됩니다
-5. **Run & Results 탭**: **Run Analysis** 클릭 → 진행률/로그 확인 → 완료 시 결과 레이어가 QGIS 프로젝트에 자동 로드됨
+### Usage (Dock Widget)
+1. **Inputs tab**: select the Before/After Sentinel-2 folders, AOI file, and output folder → click **Validate Inputs** (use **Clear Inputs** to reset if you want to pick different paths)
+2. **Change Detection tab**: choose the method (baseline/CVA/both), threshold, morphology, etc.
+3. **Spatial Analysis tab**: configure spatial statistics (Moran's I / Gi*) and the optional experimental ML step
+4. **Dependencies tab**: once the install above is done, every item should show "Ready"
+5. **Run & Results tab**: click **Run Analysis** → watch progress/log → on completion, result layers are auto-loaded into the QGIS project
 
-### 체크섬 검증 (선택)
+### Checksum verification (optional)
 ```powershell
 certutil -hashfile solafune_change_analyzer.zip SHA256
-# solafune_change_analyzer.zip.sha256 파일 내용과 비교
+# compare against the contents of solafune_change_analyzer.zip.sha256
 ```
 
-### 자세한 문서
-`Usage_Guide.pdf` 전체, 또는 `solafune-sentinel2-change-source.zip`을 풀면 나오는 `docs/QGIS_PLUGIN_USER_GUIDE.md`(사용법), `docs/QGIS_PLUGIN_DEVELOPMENT.md`(개발), `docs/QGIS_PLUGIN_ARCHITECTURE.md`(구조), `docs/QGIS_PLUGIN_TEST_CHECKLIST.md`(실제 검증 기록)를 참고하세요.
+### Further documentation
+See the full `Usage_Guide.pdf`, or unzip `solafune-sentinel2-change-source.zip` and read `docs/QGIS_PLUGIN_USER_GUIDE.md` (usage), `docs/QGIS_PLUGIN_DEVELOPMENT.md` (development), `docs/QGIS_PLUGIN_ARCHITECTURE.md` (architecture), and `docs/QGIS_PLUGIN_TEST_CHECKLIST.md` (verification record).
 
 ---
 
-## ② `solafune-sentinel2-change-source.zip` — 스크립트(CLI) 버전 (= GitHub Download ZIP)
+## (2) `solafune-sentinel2-change-source.zip` — script (CLI) edition (= the entire repository as one archive)
 
-QGIS 없이 **터미널에서 명령어로** 실행하는 버전입니다. `git archive HEAD`로 만들어 GitHub에 올라간 최신 커밋과 **완전히 동일한 내용**이며(`solafune-sentinel2-change-master/` 폴더로 감싸진 구조 — GitHub 저장소 페이지의 "Code → Download ZIP"과 동일), 원본 입력 데이터(`inputs/`)까지 이미 포함되어 있어 압축만 풀면 바로 실행됩니다.
+Runs **from a terminal**, no QGIS required. Built with `git archive HEAD`, so its contents are a byte-for-byte snapshot of the exact commit pushed to GitHub (wrapped in a `solafune-sentinel2-change-master/` folder, the same layout GitHub's "Code → Download ZIP" produces) — full source code, tests, docs, and config, ready to run right after unzipping since it already includes the raw input data (`inputs/`).
 
-### 설치
+One deliberate difference from a literal "Download ZIP": the `submission/` and `yeonjun/` packaging folders (this bundle, and the author's personal Korean working notes) are excluded from the archive. Including them would make this zip contain a copy of itself, growing without bound every time it's regenerated — so this file is best read as "the entire codebase," not literally every byte of the GitHub repository.
+
+### Install
 ```bash
 unzip solafune-sentinel2-change-source.zip
 cd solafune-sentinel2-change-master
@@ -72,49 +74,49 @@ python -m venv .venv
 .venv\Scripts\pip install -r requirements-dev.txt
 .venv\Scripts\pip install -e .
 ```
-(macOS/Linux는 `.venv\Scripts\...` 대신 `source .venv/bin/activate` 후 `pip ...`)
+(On macOS/Linux, use `source .venv/bin/activate` then `pip ...` instead of `.venv\Scripts\...`.)
 
-### 실행 — 한 줄 명령
+### Run — one command
 ```bash
 solafune-change all --config config/default.yaml
 ```
-약 30초 안에 전체 파이프라인이 끝나고, 결과는 `outputs/`(DB, 그림, 지도, 통계, 요약 JSON)와 `data/processed/`(중간 GeoTIFF)에 생성됩니다.
+The full pipeline finishes in about 30 seconds. Results are written to `outputs/` (database, figures, map, statistics, summary JSON) and `data/processed/` (intermediate GeoTIFFs).
 
-### 개별 명령어 / 옵션 / config.yaml 전체 필드
-`Usage_Guide.pdf`의 PART B (B.4~B.10)에 전체 표로 정리되어 있습니다.
+### Individual commands / options / the full config.yaml field reference
+See PART B (B.4–B.10) of `Usage_Guide.pdf` for complete tables.
 
-### 테스트
+### Tests
 ```bash
-python -m pytest tests/ -v      # 65개 테스트
+python -m pytest tests/ -v      # 65 tests
 ```
 
 ---
 
-## ③ `data/` — 원본 입력 데이터 (확인용)
+## (3) `data/` — raw input data (for inspection)
 
-`aoi.geojson`, `example_change_detection.py`, `instructions.pdf`, `data/sentinel2_20230812/`·`data/sentinel2_20230902/`(B02/B03/B04 GeoTIFF). ①·②에는 이미 포함되어 있어 없어도 실행 가능 — 압축을 풀지 않고 원본 위성영상을 바로 열어보고 싶을 때를 위한 별도 복사본입니다.
+`aoi.geojson`, `example_change_detection.py`, `instructions.pdf`, `data/sentinel2_20230812/` and `data/sentinel2_20230902/` (B02/B03/B04 GeoTIFFs). Both (1) and (2) already include this data, so it isn't strictly required to run either edition — this is a separate standalone copy for opening the raw imagery directly without unzipping anything.
 
-## ④ `results/` — 실제 실행 결과물 원본 (재실행 불필요)
+## (4) `results/` — actual output artifacts (no re-run needed)
 
-코드를 실행하지 않아도 바로 열어볼 수 있는, 실제로 파이프라인을 돌려서 나온 최종 산출물입니다.
+The real, final output of an actual pipeline run — open these directly without executing any code.
 
-- `results/outputs/database/change_analysis.gpkg` — GeoPackage (QGIS/DB Browser로 바로 열람 가능)
-- `results/outputs/figures/change_comparison.png` — baseline vs CVA vs Gi* 비교 그림
-- `results/outputs/maps/interactive_map.html` — 인터랙티브 지도 (브라우저로 더블클릭해서 열기, 오프라인 동작)
-- `results/outputs/statistics/`, `results/outputs/report.md`, `results/outputs/summary.json` 등
-- `results/data_processed/` — 스택 GeoTIFF, baseline/CVA intensity·binary 래스터
+- `results/outputs/database/change_analysis.gpkg` — GeoPackage (opens directly in QGIS or any DB Browser)
+- `results/outputs/figures/change_comparison.png` — baseline vs. CVA vs. Gi* comparison figure
+- `results/outputs/maps/interactive_map.html` — interactive map (double-click to open in a browser, works fully offline)
+- `results/outputs/statistics/`, `results/outputs/report.md`, `results/outputs/summary.json`, etc.
+- `results/data_processed/` — stacked GeoTIFF, baseline/CVA intensity & binary rasters
 
-(② 소스 zip에는 용량 문제로 이 결과 파일들이 포함되어 있지 않습니다 — 재실행 없이 바로 결과만 보고 싶다면 여기를 여세요.)
+(Item (2), the source zip, does not include these result files to keep its size down — open this folder instead if you just want to see the outcome without re-running anything.)
 
 ---
 
-## 요약 표
+## Summary table
 
-| 실행 방식 | 필요한 파일 | 실행 명령/방법 | QGIS 필요 여부 |
+| How to run | Files needed | Command / method | QGIS required? |
 |---|---|---|---|
-| GUI (플러그인) | `solafune_change_analyzer.zip` | Plugins → Install from ZIP → Dock Widget에서 Run 클릭 | 필요 (QGIS 3.28+) |
-| CLI (스크립트) | `solafune-sentinel2-change-source.zip` | 압축 해제 → `pip install -e .` → `solafune-change all --config config/default.yaml` | 불필요 |
-| 결과만 확인 | `results/` | 그대로 열람 (QGIS/브라우저 등으로) | 불필요 |
-| 데이터만 확인 | `data/` | 그대로 열람 (QGIS/GDAL 등으로) | 불필요 |
+| GUI (plugin) | `solafune_change_analyzer.zip` | Plugins → Install from ZIP → click Run in the Dock Widget | Yes (QGIS 3.28+) |
+| CLI (script) | `solafune-sentinel2-change-source.zip` | Unzip → `pip install -e .` → `solafune-change all --config config/default.yaml` | No |
+| View results only | `results/` | Open directly (QGIS, browser, etc.) | No |
+| View data only | `data/` | Open directly (QGIS, GDAL, etc.) | No |
 
-두 실행 방식 모두 **같은 분석 엔진**(`solafune_change` 코어 패키지)을 사용하므로 결과가 동일합니다 — 코드가 두 벌로 나뉘어 있지 않습니다.
+Both execution modes share the **same analysis engine** (the `solafune_change` core package), so results are identical — the analysis logic is never duplicated between them.
