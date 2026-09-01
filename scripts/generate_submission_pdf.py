@@ -223,7 +223,10 @@ def build_story(styles: dict) -> list:
     story.append(Spacer(1, 30))
     story.append(Paragraph("Solafune Sentinel-2 Change Analysis", s["title"]))
     story.append(
-        Paragraph("Detailed Usage Guide &mdash; QGIS Plugin Edition &amp; Script (CLI) Edition", s["subtitle"])
+        Paragraph(
+            "Detailed Usage Guide &mdash; QGIS Plugin Edition &amp; Script (CLI) Edition",
+            s["subtitle"],
+        )
     )
     story.append(hr(color=NAVY, thickness=1.4, space_before=10, space_after=16))
     story.append(
@@ -248,13 +251,22 @@ def build_story(styles: dict) -> list:
                     "GitHub repository",
                     "https://github.com/yeonjun7724/solafune-sentinel2-change (Public)",
                 ],
-                ["AOI", "Open-pit mine, Zambia, approx. 264.6 km\u00b2 (EPSG:32735, UTM 35S, 10 m resolution)"],
-                ["Compared acquisitions", "2023-08-12 vs 2023-09-02 (Sentinel-2 bands B02/B03/B04)"],
+                [
+                    "AOI",
+                    "Open-pit mine, Zambia, approx. 264.6 km\u00b2 (EPSG:32735, UTM 35S, 10 m resolution)",
+                ],
+                [
+                    "Compared acquisitions",
+                    "2023-08-12 vs 2023-09-02 (Sentinel-2 bands B02/B03/B04)",
+                ],
                 [
                     "Headline results",
                     "514 change features / total changed area 37,405,887 m\u00b2 (14.14% of AOI) / Global Moran's I = 0.834 (p=0.001)",
                 ],
-                ["Target QGIS version", "3.28 or later (installed and run on a real 3.44.12 instance)"],
+                [
+                    "Target QGIS version",
+                    "3.28 or later (installed and run on a real 3.44.12 instance)",
+                ],
                 ["Target Python version", "3.10 or later (developed/tested on 3.12)"],
                 ["Tests", "65 pytest cases, all passing; ruff/black clean"],
             ],
@@ -496,7 +508,10 @@ def build_story(styles: dict) -> list:
     )
 
     story.append(
-        Paragraph("Option 1 (recommended, no extra folder): install straight into QGIS's own Python", s["h3"])
+        Paragraph(
+            "Option 1 (recommended, no extra folder): install straight into QGIS's own Python",
+            s["h3"],
+        )
     )
     story.append(
         Paragraph(
@@ -509,7 +524,9 @@ def build_story(styles: dict) -> list:
             s["body"],
         )
     )
-    story.append(Paragraph("Windows (adjust the path if your QGIS is installed elsewhere):", s["body"]))
+    story.append(
+        Paragraph("Windows (adjust the path if your QGIS is installed elsewhere):", s["body"])
+    )
     story.append(
         code_block(
             'cd "C:\\Program Files\\QGIS 3.44.12\\bin"\n'
@@ -532,7 +549,9 @@ def build_story(styles: dict) -> list:
         )
     )
 
-    story.append(Paragraph("Option 2 (isolated, safer): separate .venv + External interpreter", s["h3"]))
+    story.append(
+        Paragraph("Option 2 (isolated, safer): separate .venv + External interpreter", s["h3"])
+    )
     story.append(
         Paragraph(
             "Option 1 loads a second GDAL into the same process as QGIS, which carries a theoretical conflict "
@@ -549,7 +568,11 @@ def build_story(styles: dict) -> list:
             ["", "Option 1: install into QGIS's own Python", "Option 2: separate .venv"],
             [
                 ["Extra folder needed", "No", "Yes (.venv/)"],
-                ["Execution process", "Same process as QGIS (embedded)", "Separate process (external call)"],
+                [
+                    "Execution process",
+                    "Same process as QGIS (embedded)",
+                    "Separate process (external call)",
+                ],
                 [
                     "Setup steps",
                     "One pip command",
@@ -593,7 +616,10 @@ def build_story(styles: dict) -> list:
                     "GeoJSON, GeoPackage, or Shapefile. Does not need to be in WGS84 \u2014 it is automatically "
                     "reprojected to match the raster CRS",
                 ],
-                ["Output directory", "Where results are written. Created automatically if it doesn't exist"],
+                [
+                    "Output directory",
+                    "Where results are written. Created automatically if it doesn't exist",
+                ],
                 [
                     "Run label",
                     "Optional label to tell runs apart. Prepended to the run_id and shown in the layer group "
@@ -659,7 +685,10 @@ def build_story(styles: dict) -> list:
         make_table(
             ["Field", "Description"],
             [
-                ["Enable spatial statistics", "Turns on grid-aggregated spatial statistics (on by default)"],
+                [
+                    "Enable spatial statistics",
+                    "Turns on grid-aggregated spatial statistics (on by default)",
+                ],
                 [
                     "Grid cell size",
                     "Side length of the analysis grid, in meters. Default 150 m \u2014 statistics are computed "
@@ -686,7 +715,10 @@ def build_story(styles: dict) -> list:
                     "Global: spatial autocorrelation of overall change intensity. Local (LISA): per-cell "
                     "High-High / Low-Low / High-Low / Low-High cluster classification",
                 ],
-                ["Getis-Ord Gi*", "Detects statistically significant hot spots / cold spots (90/95/99% bands)"],
+                [
+                    "Getis-Ord Gi*",
+                    "Detects statistically significant hot spots / cold spots (90/95/99% bands)",
+                ],
                 [
                     "Experimental unsupervised spatial ML",
                     "Since there is no ground truth at all, a warning is always shown on screen. Choose "
@@ -749,16 +781,31 @@ def build_story(styles: dict) -> list:
             ["Progress", "Stage"],
             [
                 ["0\u20135%", "Input discovery \u2014 locating B02/B03/B04 files"],
-                ["5\u201312%", "Validation \u2014 CRS / transform / dimensions / AOI overlap checks"],
-                ["12\u201322%", "Raster alignment \u2014 grid alignment (resampling if needed), AOI masking"],
-                ["22\u201330%", "Stack creation \u2014 building the RGB-ordered band-stack GeoTIFF"],
+                [
+                    "5\u201312%",
+                    "Validation \u2014 CRS / transform / dimensions / AOI overlap checks",
+                ],
+                [
+                    "12\u201322%",
+                    "Raster alignment \u2014 grid alignment (resampling if needed), AOI masking",
+                ],
+                [
+                    "22\u201330%",
+                    "Stack creation \u2014 building the RGB-ordered band-stack GeoTIFF",
+                ],
                 ["30\u201342%", "Radiometric normalization \u2014 applying the chosen correction"],
                 ["42\u201355%", "Baseline detection \u2014 example-method change detection"],
                 ["55\u201368%", "Robust CVA \u2014 improved-method change detection"],
-                ["68\u201375%", "Threshold &amp; morphology \u2014 binarization plus post-processing"],
+                [
+                    "68\u201375%",
+                    "Threshold &amp; morphology \u2014 binarization plus post-processing",
+                ],
                 ["75\u201382%", "Polygon extraction \u2014 vectorization, confidence scoring"],
                 ["82\u201390%", "Spatial statistics \u2014 Moran's I / Gi* / FDR"],
-                ["90\u201394%", "Experimental spatial ML \u2014 (if enabled) Isolation Forest / DBSCAN"],
+                [
+                    "90\u201394%",
+                    "Experimental spatial ML \u2014 (if enabled) Isolation Forest / DBSCAN",
+                ],
                 [
                     "94\u2013100%",
                     "Database, visualization &amp; report \u2014 GeoPackage, figures, map, report.md",
@@ -888,7 +935,8 @@ def build_story(styles: dict) -> list:
     story.append(Paragraph("B.2 Installation Steps", s["h2"]))
     story.append(
         Paragraph(
-            "1) Unzip (folder name ends in -master, matching GitHub's Download ZIP layout)", s["body"]
+            "1) Unzip (folder name ends in -master, matching GitHub's Download ZIP layout)",
+            s["body"],
         )
     )
     story.append(
@@ -932,10 +980,16 @@ def build_story(styles: dict) -> list:
         make_table(
             ["Command", "Description"],
             [
-                ["solafune-change validate --config &lt;yaml&gt;", "Validates inputs only (dry run)"],
+                [
+                    "solafune-change validate --config &lt;yaml&gt;",
+                    "Validates inputs only (dry run)",
+                ],
                 ["solafune-change run --config &lt;yaml&gt;", "Runs the full pipeline"],
                 ["solafune-change stats --config &lt;yaml&gt;", "Forces spatial statistics on"],
-                ["solafune-change report --config &lt;yaml&gt;", "Regenerates report.md from a prior run"],
+                [
+                    "solafune-change report --config &lt;yaml&gt;",
+                    "Regenerates report.md from a prior run",
+                ],
                 ["solafune-change all --config &lt;yaml&gt;", "validate then run (recommended)"],
                 ["python -m solafune_change --help", "Same as above, invoked as a module"],
             ],
@@ -960,7 +1014,10 @@ def build_story(styles: dict) -> list:
                 ["--permutations N", "Number of permutations"],
                 ["--seed N", "Random seed"],
                 ["--ml / --no-ml", "Toggle experimental ML on/off"],
-                ["--json-progress", "JSON Lines progress output (used for external/plugin execution)"],
+                [
+                    "--json-progress",
+                    "JSON Lines progress output (used for external/plugin execution)",
+                ],
                 ["-v / --verbose", "Debug-level logging"],
             ],
             s,
@@ -988,10 +1045,19 @@ def build_story(styles: dict) -> list:
                     "data/processed/{baseline,cva}_change_{intensity,binary}.tif",
                     "Four change-detection rasters",
                 ],
-                ["outputs/database/change_analysis.gpkg", "GeoPackage (SQLite-based spatial database)"],
-                ["outputs/figures/change_comparison.png", "Baseline vs. CVA vs. Gi* comparison figure"],
+                [
+                    "outputs/database/change_analysis.gpkg",
+                    "GeoPackage (SQLite-based spatial database)",
+                ],
+                [
+                    "outputs/figures/change_comparison.png",
+                    "Baseline vs. CVA vs. Gi* comparison figure",
+                ],
                 ["outputs/maps/interactive_map.html", "Interactive map (fully offline)"],
-                ["outputs/statistics/global_moran.json, spatial_statistics.csv", "Spatial-statistics values"],
+                [
+                    "outputs/statistics/global_moran.json, spatial_statistics.csv",
+                    "Spatial-statistics values",
+                ],
                 [
                     "outputs/qgis/styles/*.qml, solafune_change_analyzer.zip",
                     "QGIS styles, plugin zip",
@@ -1059,7 +1125,11 @@ def build_story(styles: dict) -> list:
                 ["change_detection.method", "both", "baseline / cva / both"],
                 ["change_detection.threshold_method", "otsu", "otsu / percentile / manual"],
                 ["change_detection.min_area_m2", "400.0", "Minimum change-feature area"],
-                ["change_detection.morphology.*", "opening_then_closing, 3px", "Morphological post-processing"],
+                [
+                    "change_detection.morphology.*",
+                    "opening_then_closing, 3px",
+                    "Morphological post-processing",
+                ],
                 ["spatial_statistics.enabled", "true", "Toggle spatial statistics"],
                 ["spatial_statistics.grid_size_m", "150.0", "Analysis grid size"],
                 ["spatial_statistics.weights", "queen", "queen / rook / knn"],
@@ -1142,7 +1212,11 @@ def build_story(styles: dict) -> list:
             s["body"],
         )
     )
-    story.append(Paragraph("Interpreting uncertainty: real change vs. clouds, shadow, season, brightness", s["h3"]))
+    story.append(
+        Paragraph(
+            "Interpreting uncertainty: real change vs. clouds, shadow, season, brightness", s["h3"]
+        )
+    )
     story.append(
         Paragraph(
             "Each alternative explanation for a detection is addressed explicitly below, rather than assumed "
@@ -1152,7 +1226,11 @@ def build_story(styles: dict) -> list:
     )
     story.append(
         make_table(
-            ["Possible confound", "Could it explain a detection here?", "How this pipeline addresses it"],
+            [
+                "Possible confound",
+                "Could it explain a detection here?",
+                "How this pipeline addresses it",
+            ],
             [
                 [
                     "Clouds / cloud shadow",
@@ -1258,8 +1336,14 @@ def build_story(styles: dict) -> list:
                 ["id", "Feature ID"],
                 ["date_before / date_after", "Compared acquisition dates (20230812 / 20230902)"],
                 ["method / threshold_method / threshold_value", "Method and threshold used"],
-                ["area_m2 / perimeter_m / compactness", "Area / perimeter / Polsby-Popper compactness"],
-                ["mean_change / max_change / p95_change", "Change-intensity statistics within the feature"],
+                [
+                    "area_m2 / perimeter_m / compactness",
+                    "Area / perimeter / Polsby-Popper compactness",
+                ],
+                [
+                    "mean_change / max_change / p95_change",
+                    "Change-intensity statistics within the feature",
+                ],
                 [
                     "confidence",
                     "A 0-1 heuristic score (not a calibrated probability) \u2014 weighted combination of "
@@ -1296,7 +1380,9 @@ def build_story(styles: dict) -> list:
         )
     )
     story.append(Paragraph("quality_checks", s["h3"]))
-    story.append(Paragraph("Warnings/errors raised during validation (zero for this run).", s["body"]))
+    story.append(
+        Paragraph("Warnings/errors raised during validation (zero for this run).", s["body"])
+    )
     story.append(PageBreak())
 
     # ================================================================== 5. Bugs
@@ -1436,13 +1522,19 @@ def build_story(styles: dict) -> list:
                     "Change Vector Analysis \u2014 combines multi-band change into a single vector magnitude",
                 ],
                 ["MAD", "Median Absolute Deviation \u2014 an outlier-robust measure of dispersion"],
-                ["Moran's I", "Global spatial-autocorrelation index (-1 to 1; positive = clustered, negative = dispersed)"],
+                [
+                    "Moran's I",
+                    "Global spatial-autocorrelation index (-1 to 1; positive = clustered, negative = dispersed)",
+                ],
                 [
                     "LISA",
                     "Local Indicators of Spatial Association \u2014 cluster classification based on Local Moran's I",
                 ],
                 ["Getis-Ord Gi*", "Statistical significance test for local hot/cold spots"],
-                ["FDR", "False Discovery Rate \u2014 controls the false-positive rate under multiple testing"],
+                [
+                    "FDR",
+                    "False Discovery Rate \u2014 controls the false-positive rate under multiple testing",
+                ],
                 ["confidence", "A 0-1 heuristic score, not a calibrated probability"],
                 ["GeoPackage", "An OGC-standard spatial data format, internally a SQLite file"],
             ],
@@ -1470,7 +1562,10 @@ def main() -> None:
         "--font", type=str, default=DEFAULT_FONT, help="Regular TTF path (any Unicode-capable font)"
     )
     parser.add_argument(
-        "--font-bold", type=str, default=DEFAULT_FONT_BOLD, help="Bold TTF path (any Unicode-capable font)"
+        "--font-bold",
+        type=str,
+        default=DEFAULT_FONT_BOLD,
+        help="Bold TTF path (any Unicode-capable font)",
     )
     args = parser.parse_args()
 

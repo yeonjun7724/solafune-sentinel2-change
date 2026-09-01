@@ -16,8 +16,22 @@ Supported QGIS version: 3.28+ (developed and manually tested against 3.44.12).
 
 Most QGIS installs (especially Windows/OSGeo4W ones) do **not** ship
 `rasterio`, `scikit-image`, `scikit-learn`, `libpysal`, `esda`, or `folium`.
-The plugin detects this (**Dependencies** tab) and can run the analysis in a
-separate Python environment instead of QGIS's own:
+The plugin detects this (**Dependencies** tab). You do not need a separate
+`.venv` to fix it — pick whichever of the two options below fits:
+
+**Option A (recommended, no extra folder) — install straight into QGIS's own
+Python.** Field-verified end to end on QGIS 3.44.12: after this, the
+Dependencies tab reports "Ready" and Embedded mode just works, no External
+interpreter needed.
+
+```powershell
+cd "C:\Program Files\QGIS 3.44.12\bin"
+python-qgis-ltr.bat -m pip install --user rasterio geopandas shapely pyproj scipy scikit-image PyYAML libpysal esda scikit-learn matplotlib folium
+```
+
+**Option B (fully isolated) — separate `.venv` + External interpreter.**
+Avoids any theoretical GDAL-version conflict between the plugin's rasterio
+and QGIS's own GDAL, at the cost of a slightly slower, separate-process run:
 
 ```bash
 cd path\to\solafune-sentinel2-change
@@ -37,6 +51,9 @@ external interpreter you configured.
 1. **Inputs tab**: select the before/after Sentinel-2 folders (each must
    directly contain B02/B03/B04 as GeoTIFF or JP2), the AOI file, and an
    output directory. Click **Validate Inputs**. Fix any red "Invalid" issues.
+   Use **Clear Inputs** to reset all four path fields, the run label, and the
+   validation display (including values saved from a previous session) if
+   you want to start over with different paths.
 2. **Change Detection tab**: pick a method (default: "Run both" — baseline +
    Robust RGB CVA), normalization, threshold method, morphology and minimum
    area settings.
@@ -79,6 +96,7 @@ see `docs/example_queries.sql` for ready-to-run SQL.
 |---|---|
 | "Embedded QGIS Python (missing dependencies)" | Expected on most Windows installs — set up an External interpreter (section 2). |
 | Validate Inputs shows "B04 not found" | Folder must directly contain `B02`/`B03`/`B04` files (GeoTIFF/JP2), not a nested subfolder. |
+| Stale paths from a previous session keep reappearing | Use the **Clear Inputs** button on the Inputs tab — it clears the fields and the values persisted from the last session. |
 | Run fails immediately with a dependency error | Check the **Dependencies** tab; the chosen execution mode is missing a package. |
 | Nothing loads after a successful run | "Load results into current QGIS project" (Outputs tab) must be checked; also check the log panel for per-layer warnings. |
 | External run never finishes | Confirm the interpreter path is a real `python.exe`/`python3` binary, not a `.bat`/shortcut, and that `pip install -e .` succeeded in that environment. |

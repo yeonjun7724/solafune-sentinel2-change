@@ -55,7 +55,7 @@ target-version = ["py310"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-extend-exclude = ["qgis_plugin/solafune_change_analyzer/vendor", "build", "inputs", "Technical Assignment_DS"]
+extend-exclude = ["qgis_plugin/solafune_change_analyzer/vendor", "build", "inputs", "Technical Assignment_DS", "submission"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]

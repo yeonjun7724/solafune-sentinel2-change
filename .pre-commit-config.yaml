@@ -4,7 +4,7 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|submission/|yeonjun/)
         # Formatting is handled by black below, not ruff-format, to match
         # this project's pyproject.toml [tool.black] configuration.
 
@@ -13,22 +13,26 @@ repos:
     hooks:
       - id: black
         language_version: python3
-        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|submission/|yeonjun/)
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|.*\.qml)
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|submission/|yeonjun/|.*\.qml)
       - id: end-of-file-fixer
-        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|submission/|yeonjun/)
       - id: check-yaml
       - id: check-toml
       - id: check-json
-        exclude: ^outputs/
+        exclude: ^(outputs/|submission/)
       - id: check-added-large-files
         args: [--maxkb=6000]
+        # submission/ intentionally bundles multi-MB result artifacts (a
+        # rendered interactive map, GeoTIFFs, a source-code zip) for the
+        # reviewer; they're deliberate, not accidental large-file commits.
+        exclude: ^submission/
       - id: check-merge-conflict
       - id: mixed-line-ending
         args: [--fix=lf]
-        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|submission/|yeonjun/)

@@ -113,6 +113,67 @@ band_table rows: 6                     <- real band metadata from the external p
 - [x] `on_validate()` successfully validates via a configured External interpreter
 - [x] `solafune-change validate --config ... --json` covered by `tests/test_cli.py`
 
+### Real-world bug found and fixed: `processed_dir` path resolution
+
+During real external-mode runs, results were observed landing under an
+unrelated, third-party-hijacked TEMP directory instead of next to the chosen
+output folder. Root cause: `config.py`'s `load_config()` always defaulted
+`processed_dir` to a relative path resolved against the temp config file's
+own parent-of-parent directory — meaningless for the short-lived temp YAML
+the plugin writes for an external run. Reproduced directly on this machine
+(`tempfile.mkdtemp()` lands under the same hijacked path as the reported
+error). Fixed in `config.py` (`processed_dir` now `Path | None`, omitted
+from `request_to_yaml_dict()` when unset) and `settings.py` (`export_yaml()`
+now always computes and writes an explicit absolute `processed_dir` next to
+`output_dir`). Covered by two new regression tests:
+
+- [x] `test_processed_dir_defaults_to_none_when_unset_in_yaml` / `test_processed_dir_respected_when_explicitly_set` (`tests/test_config.py`)
+- [x] `test_processed_dir_none_falls_back_to_sibling_of_output_dir` (`tests/test_pipeline_integration.py`)
+
+### Real QGIS 3.44.12: Clear Inputs button
+
+Driven headlessly via `qgis.testing.mocked.get_iface()`: populated all four
+Inputs-tab path fields, the run label, and the validation status/band table
+with stale values, called `controller.persist_settings()` to simulate a
+previous session, then called `on_clear_inputs()`.
+
+```
+Before clear: before_edit = "C:\some\stale\before", persisted before_folder = "C:\some\stale\before"
+After clear:  before_edit = "", after_edit = "", aoi_edit = "", output_dir_edit = "",
+              run_label_edit = "run", band_table rows = 0, controller.state = "IDLE",
+              persisted before_folder = ""
+CLEAR INPUTS TEST PASSED
+```
+
+- [x] Clears all four path fields, run label (reset to default "run"), and the validation display
+- [x] Also clears the values persisted from the previous session (not just the widgets)
+- [x] Does not touch settings on other tabs (Change Detection, Spatial Analysis, etc.)
+
+### Real QGIS 3.44.12: dependency install without a separate `.venv`
+
+`Usage_Guide.pdf` documents two dependency-setup paths (a separate `.venv` +
+External interpreter, or installing straight into QGIS's own Python via
+`pip install --user`). The second path was field-tested, not just described:
+
+```powershell
+cd "C:\Program Files\QGIS 3.44.12\bin"
+python-qgis-ltr.bat -m pip install --user rasterio geopandas shapely pyproj scipy scikit-image PyYAML libpysal esda scikit-learn matplotlib folium
+```
+
+After this, every Dependencies-tab row showed "Ready", and a full pipeline
+run (spatial statistics + experimental ML enabled) completed **entirely in
+Embedded mode** — rasterio coexisted with QGIS's own GDAL in the same
+process without a CRS-lookup or import conflict:
+
+```
+514 change features, Global Moran's I = 0.804  (a sane value, run in embedded mode)
+```
+
+- [x] All required packages report "Ready" after the `--user` install
+- [x] `Validate Inputs` succeeds in Embedded mode
+- [x] `Run Analysis` (with spatial statistics and experimental ML) completes in Embedded mode
+- [x] Verified for this specific QGIS/package-version combination only — a different combination could in theory still hit a GDAL conflict, which is why the isolated `.venv` option remains documented as the safer alternative
+
 ### Manual checklist (needs an interactive QGIS session — not run by this assessment; check off as you go)
 
 - [ ] Fresh QGIS profile, install plugin via **Install from ZIP**
