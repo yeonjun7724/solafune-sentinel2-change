@@ -8,6 +8,7 @@ setup:
 	$(PYTHON) -m pip install --upgrade pip
 	$(PYTHON) -m pip install -r requirements-dev.txt
 	$(PYTHON) -m pip install -e .
+	$(PYTHON) -m pre_commit install
 
 validate:
 	$(PYTHON) -m solafune_change validate --config config/default.yaml

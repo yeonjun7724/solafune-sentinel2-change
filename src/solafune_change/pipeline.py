@@ -10,6 +10,7 @@ nothing here imports Qt or QGIS.
 from __future__ import annotations
 
 import logging
+import re
 import time
 import uuid
 from datetime import datetime, timezone
@@ -143,7 +144,7 @@ def run_pipeline(
     token = cancellation_token or CancellationToken()
     started = datetime.now(timezone.utc)
     t0 = time.perf_counter()
-    run_id = f"{started.strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+    run_id = _build_run_id(request.run_label, started)
 
     output_dir = Path(request.output_dir)
     processed_dir = (
@@ -261,6 +262,7 @@ def run_pipeline(
     token.check("baseline")
     baseline_intensity_path = baseline_binary_path = None
     baseline_result = None
+    bl_threshold = None
     if request.method in ("baseline", "both"):
         _emit(
             progress_callback,
@@ -282,27 +284,28 @@ def run_pipeline(
         min_px = postprocessing.min_area_to_pixel_count(request.min_area_m2, grid.pixel_area_m2)
         bl_post = postprocessing.filter_min_area(bl_morphed, min_px, fill_holes=request.fill_holes)
 
-        baseline_intensity_path = processed_dir / "baseline_change_intensity.tif"
-        baseline_binary_path = processed_dir / "baseline_change_binary.tif"
-        preprocessing.write_single_band_geotiff(
-            baseline_intensity_path,
-            baseline_result.intensity,
-            grid,
-            -9999.0,
-            "float32",
-            aligned.combined_valid_mask,
-            description="Baseline change intensity [0,1]",
-        )
-        preprocessing.write_single_band_geotiff(
-            baseline_binary_path,
-            bl_post.binary.astype("uint8"),
-            grid,
-            255,
-            "uint8",
-            aligned.combined_valid_mask,
-            build_overviews=False,
-            description="Baseline binary change (1=changed)",
-        )
+        if request.write_intermediate:
+            baseline_intensity_path = processed_dir / "baseline_change_intensity.tif"
+            baseline_binary_path = processed_dir / "baseline_change_binary.tif"
+            preprocessing.write_single_band_geotiff(
+                baseline_intensity_path,
+                baseline_result.intensity,
+                grid,
+                -9999.0,
+                "float32",
+                aligned.combined_valid_mask,
+                description="Baseline change intensity [0,1]",
+            )
+            preprocessing.write_single_band_geotiff(
+                baseline_binary_path,
+                bl_post.binary.astype("uint8"),
+                grid,
+                255,
+                "uint8",
+                aligned.combined_valid_mask,
+                build_overviews=False,
+                description="Baseline binary change (1=changed)",
+            )
     _emit(progress_callback, "baseline", "Baseline detection complete", 55.0)
 
     # --- 55-68%: robust CVA -----------------------------------------------------
@@ -344,27 +347,28 @@ def run_pipeline(
             cva_morphed, min_px, fill_holes=request.fill_holes
         )
 
-        cva_intensity_path = processed_dir / "cva_change_intensity.tif"
-        cva_binary_path = processed_dir / "cva_change_binary.tif"
-        preprocessing.write_single_band_geotiff(
-            cva_intensity_path,
-            cva_result.cva,
-            grid,
-            -9999.0,
-            "float32",
-            aligned.combined_valid_mask,
-            description="Robust CVA magnitude",
-        )
-        preprocessing.write_single_band_geotiff(
-            cva_binary_path,
-            cva_post.binary.astype("uint8"),
-            grid,
-            255,
-            "uint8",
-            aligned.combined_valid_mask,
-            build_overviews=False,
-            description="CVA binary change (1=changed)",
-        )
+        if request.write_intermediate:
+            cva_intensity_path = processed_dir / "cva_change_intensity.tif"
+            cva_binary_path = processed_dir / "cva_change_binary.tif"
+            preprocessing.write_single_band_geotiff(
+                cva_intensity_path,
+                cva_result.cva,
+                grid,
+                -9999.0,
+                "float32",
+                aligned.combined_valid_mask,
+                description="Robust CVA magnitude",
+            )
+            preprocessing.write_single_band_geotiff(
+                cva_binary_path,
+                cva_post.binary.astype("uint8"),
+                grid,
+                255,
+                "uint8",
+                aligned.combined_valid_mask,
+                build_overviews=False,
+                description="CVA binary change (1=changed)",
+            )
 
         primary_intensity, primary_labels, primary_binary = (
             cva_result.cva,
@@ -372,12 +376,13 @@ def run_pipeline(
             cva_post.binary,
         )
     elif baseline_result is not None:
+        # primary_method_name is already "baseline" here (set above from
+        # `"cva" if cva_result is not None else "baseline"`).
         primary_intensity, primary_labels, primary_binary = (
             baseline_result.intensity,
             bl_post.labels,
             bl_post.binary,
         )
-        primary_method_name = "baseline"
     _emit(progress_callback, "threshold", "Threshold and morphology complete", 75.0)
 
     # --- 75-82%: vectorization -----------------------------------------------------
@@ -682,6 +687,7 @@ def run_pipeline(
         threshold_value,
         norm_meta,
         baseline_result,
+        bl_threshold,
         cva_result,
         change_features,
         grid_gdf,
@@ -725,6 +731,23 @@ def run_pipeline(
         warnings=warnings,
         runtime_seconds=runtime_seconds,
     )
+
+
+def _build_run_id(run_label: str, started: datetime) -> str:
+    """Build a run id, prefixed with a sanitized user-supplied label when one is given.
+
+    ``run_label`` (surfaced in the CLI's ``--config`` YAML and the QGIS
+    dock's "Run label" field) is purely cosmetic otherwise, so it is folded
+    into the run id here to make layer-group names and GeoPackage
+    ``run_metadata`` rows recognizable across multiple runs instead of being
+    accepted but silently dropped.
+    """
+    timestamp = f"{started.strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+    label = (run_label or "").strip()
+    if not label or label.lower() == "run":
+        return timestamp
+    safe_label = re.sub(r"[^A-Za-z0-9_-]+", "-", label).strip("-")[:40]
+    return f"{safe_label}-{timestamp}" if safe_label else timestamp
 
 
 def _package_version() -> str:
@@ -781,6 +804,7 @@ def _build_report_context(
     threshold_value,
     norm_meta,
     baseline_result,
+    bl_threshold,
     cva_result,
     change_features,
     grid_gdf,
@@ -824,14 +848,9 @@ def _build_report_context(
     baseline_pct = (
         100.0
         * float(
-            (
-                baseline_result.intensity[aligned.combined_valid_mask]
-                > thresholding.compute_threshold(
-                    baseline_result.intensity, aligned.combined_valid_mask, "otsu"
-                ).value
-            ).mean()
+            (baseline_result.intensity[aligned.combined_valid_mask] > bl_threshold.value).mean()
         )
-        if baseline_result is not None
+        if baseline_result is not None and bl_threshold is not None
         else 0.0
     )
     cva_pct = (

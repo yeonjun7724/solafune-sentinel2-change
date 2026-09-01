@@ -369,6 +369,10 @@ sandbox's DLL-loading policy — an environment restriction, not a code issue);
 type hints are present throughout `src/solafune_change/` regardless. Run
 `mypy src/solafune_change` yourself in an unrestricted environment to verify.
 
+`pre-commit` is configured (`.pre-commit-config.yaml`: ruff, black, and
+basic hygiene hooks) and installed automatically by `make setup`; install it
+manually with `pre-commit install` if you set up the environment another way.
+
 **Two environment quirks fixed during development** (both diagnosed and
 resolved, not worked around):
 

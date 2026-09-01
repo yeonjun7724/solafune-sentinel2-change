@@ -19,9 +19,9 @@ experimental=True
 deprecated=False
 server=False
 
-homepage=https://github.com/yeonjunkim/solafune-sentinel2-change
-tracker=https://github.com/yeonjunkim/solafune-sentinel2-change/issues
-repository=https://github.com/yeonjunkim/solafune-sentinel2-change
+homepage=https://github.com/yeonjun7724/solafune-sentinel2-change
+tracker=https://github.com/yeonjun7724/solafune-sentinel2-change/issues
+repository=https://github.com/yeonjun7724/solafune-sentinel2-change
 
 # NOTE (documented assumption): homepage/tracker/repository above point at the
 # GitHub repository this plugin ships in. If you fork or rename the

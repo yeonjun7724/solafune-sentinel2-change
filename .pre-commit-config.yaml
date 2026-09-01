@@ -1,0 +1,34 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+        # Formatting is handled by black below, not ruff-format, to match
+        # this project's pyproject.toml [tool.black] configuration.
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/|.*\.qml)
+      - id: end-of-file-fixer
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: ^outputs/
+      - id: check-added-large-files
+        args: [--maxkb=6000]
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: ^(qgis_plugin/solafune_change_analyzer/vendor/|inputs/|Technical Assignment_DS/)
