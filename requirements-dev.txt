@@ -5,3 +5,4 @@ ruff
 black
 mypy
 pre-commit
+reportlab>=4.0  # only used by scripts/generate_submission_pdf.py

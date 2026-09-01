@@ -39,6 +39,7 @@ dev = [
     "black",
     "mypy",
     "pre-commit",
+    "reportlab>=4.0",
 ]
 
 [project.scripts]
