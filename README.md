@@ -10,6 +10,13 @@ plugin — all sharing one core analysis engine.
 **AOI**: an open-pit mining site in Zambia, ~264.6 km². **Dates**: 2023-08-12
 vs 2023-09-02. **Bands**: B02/B03/B04 only (no NDVI — see Limitations).
 
+> **Reviewing this submission?** Everything meant for review — the QGIS
+> plugin install package, the runnable script/CLI edition (a full source
+> snapshot), a copy of the raw input data, the actual output artifacts from
+> a real run, and a detailed usage guide (`Usage_Guide.pdf`) — is bundled in
+> the [`submission/`](submission/) folder. Start with
+> [`submission/README.md`](submission/README.md).
+
 ## What was built
 
 - `src/solafune_change/` — the core engine (config, discovery, validation,
