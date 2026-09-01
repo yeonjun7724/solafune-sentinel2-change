@@ -15,7 +15,7 @@ import time
 import webbrowser
 from pathlib import Path
 
-from qgis.core import Qgis, QgsApplication, QgsMessageLog
+from qgis.core import Qgis, QgsApplication, QgsMessageLog, QgsProject
 from qgis.PyQt.QtCore import QTimer, QUrl
 from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import QApplication, QMessageBox
@@ -359,6 +359,8 @@ class Controller:
         if mode is None:
             return
 
+        self._release_stale_output_layers(self.dock.get_paths()["output_dir"])
+
         self.dock.log_view.clear()
         self._set_state("RUNNING")
         self._start_time = time.time()
@@ -368,6 +370,40 @@ class Controller:
             self._run_embedded()
         else:
             self._run_external()
+
+    def _release_stale_output_layers(self, output_dir: str) -> None:
+        """Windows guard against WinError 5 (Access Denied) on re-run.
+
+        A previous run's rasters/vectors may still be loaded as QGIS layers
+        (added by layer_loader.load_results(), never auto-removed since each
+        run's layer group has a unique run_id). GDAL opens files on Windows
+        without FILE_SHARE_DELETE, so a still-open layer blocks this run's
+        atomic_output() from os.replace()-ing the very same path -- even in
+        External mode, since the file is locked by *this* QGIS process, not
+        the subprocess. Drop any project layer whose source file lives under
+        this run's output/processed directories before writing starts.
+        """
+        if not output_dir:
+            return
+        out_path = Path(output_dir).expanduser().resolve()
+        processed_path = out_path.parent / "data" / "processed"
+        targets = (out_path, processed_path)
+
+        project = QgsProject.instance()
+        stale_ids = []
+        for layer_id, layer in project.mapLayers().items():
+            source = layer.source().split("|")[0]
+            try:
+                source_path = Path(source).resolve()
+            except (OSError, ValueError):
+                continue
+            if any(source_path == t or source_path.is_relative_to(t) for t in targets):
+                stale_ids.append(layer_id)
+        if stale_ids:
+            self.dock.append_log(
+                f"Removing {len(stale_ids)} layer(s) from a previous run to avoid file locks."
+            )
+            project.removeMapLayers(stale_ids)
 
     def _resolve_execution_mode(self) -> str | None:
         requested = self.dock.get_execution_mode()
